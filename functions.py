@@ -1,34 +1,29 @@
 # Libraries
 import math
 import numpy as np
+import variables as var
+
+# Wavelengths every 5 nm
+lam = np.arange(380., 781., 5)*10**-9
+# blackbody radiation (TO VERIFY!!)
+sun = (2*math.pi*var.h*var.c**2)/(lam**5*(np.exp((var.h*var.c)/(var.k*var.T*lam))-1))*10**-9
+# irradiance on top of atmosphere
+I = sun*(var.Rs**2/var.distance**2)
+# Rayleigh coefficient (at sea level)
+rayleigh_coeff_sea = (8*math.pi**3*(var.n**2-1)**2)/3*(1/var.N)*(1/lam**4)
 
 
-# Globals
-h = 6.62607004*10**-34  # Planck's constant
-c = 299792458           # Speed of light (m/s)
-T = 5778                # Sun's Temperature (k)
-k = 1.38064852*10**-23  # Boltzmann constant
-n = 1.0002926           # IOR Air
-r = 695500000           # Radius of Sun (m)
-Hr = 8434.5             # Atmospheric scale height (m)
-No = 2.547305*10**25    # Molecular density
-dep = 0.0279            # Depolarization factor
-distance = 149.6*10**9  # Distance Earth-Sun (m)
+def density_ratio(height):
+    return math.exp(-height/var.Hr)
 
+def phase_rayleigh(angle):
+    # Rayleigh phase function
+    return 3/(16*math.pi)*(1+(math.cos(angle))**2)
 
-def blackbody(lam):
-    # Planck's Law
-    B = (2*math.pi*h*c**2)/(lam**5*(np.exp((h*c)/(k*T*lam))-1))*10**-9
-    return B
-
-def top_atmosphere(sun):
-    # Irradiance on top of atmosphere
-    I = sun*(r**2/distance**2)
-    return I
-
-def rayleigh(lam, AM, I):
-    # Rayleigh Scattering
-    Br = 24*math.pi**3*(Hr/No*lam**-4)*((n**2-1)/(n**2+2))**2*((6+3*dep)/(6-7*dep))
-    Trs = np.exp(-Br*AM)
-    Gbn = I*Trs
-    return Gbn
+def rayleigh_outscattering(lam, I, height, length):
+    # optical depth
+    for i in range(steps):
+        optical_depth += density_ratio(height)
+    # transmittance
+    Tr = np.exp(-B*optical_depth)
+    return I*Tr
