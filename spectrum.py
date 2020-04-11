@@ -1,6 +1,7 @@
 # Libraries
 import math
 import numpy as np
+import functions as fun
 
 
 def xyz_from_xy(x, y):
@@ -9,7 +10,6 @@ def xyz_from_xy(x, y):
 class ColourSystem:
     # The CIE colour matching function for 380 - 780 nm in 5 nm intervals
     cmf = np.loadtxt('cie-cmf.txt', usecols=(1,2,3))
-
     def __init__(self, red, green, blue, white):
         # Chromaticities
         self.red, self.green, self.blue = red, green, blue
