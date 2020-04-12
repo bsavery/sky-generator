@@ -7,7 +7,7 @@ import variables as var
 # wavelengths every 5nm
 lam = np.arange(380., 781., 5)*10**-9
 # blackbody radiation (TO VERIFY!!)
-sun = (2*math.pi*var.h*var.c**2)/(lam**5*(np.exp((var.h*var.c)/(var.k*var.T*lam))-1))
+sun = (2*math.pi*var.h*var.c**2)/(lam**5*(np.exp((var.h*var.c)/(var.k*var.T*lam))-1))*10**-9
 # irradiance on top of atmosphere
 I = sun*(var.Rs**2/var.distance**2)
 # Rayleigh coefficient (at sea level)

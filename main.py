@@ -11,16 +11,16 @@ import variables as var
 height = 0                                                  # position of camera from sea level (m) (max: 60km)
 cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)   # position of camera
 earth_center = np.array([0, 0, 0])                          # center of Earth
-samples = 10                                                # number of divisions for the rays
+samples = 20                                                # number of divisions for the rays
 # Sun rotation
-sun_lat = math.radians(90)
+sun_lat = math.radians(40)
 sun_lon = math.radians(0)
 # normalize sun rotation
 sun_rot = fun.normalize(sun_lat, sun_lon)
 
 
-# Image
-pixelsx = 256
+# Image size
+pixelsx = 128
 pixelsy = 64
 
 img = Image.new('RGB', (pixelsx, pixelsy), "black")
@@ -30,8 +30,10 @@ pixels = img.load()
 for i in range(img.size[0]):
     for j in range(img.size[1]):
         # camera rotation
-        cam_lat = math.radians(j/pixelsy*90)
+        cam_lat = math.radians((1-j/pixelsy)*90)
+        #print("lat: ", j/pixelsy*90)
         cam_lon = math.radians(i/pixelsx*360-180)
+        #print("lon: ", i/pixelsx*360)
         # normalize camera rotation
         cam_rot = fun.normalize(cam_lat, cam_lon)
         # angle between camera and sun directions
@@ -40,7 +42,7 @@ for i in range(img.size[0]):
         B = fun.sphere_intersection(cam_pos, cam_rot, earth_center, var.Ra)
         # distance from camera to top of atmosphere
         AB = fun.distance_points(cam_pos, B)
-        # length of each step
+        # length of each inscattering step
         AP = AB/samples
 
         pP = 0
@@ -54,7 +56,7 @@ for i in range(img.size[0]):
             C = fun.sphere_intersection(P, sun_rot, earth_center, var.Ra)
             # distance from P to top of atmosphere
             PC = fun.distance_points(P, C)
-            # length of each step
+            # length of each outscattering step
             ds = PC/samples
             pQ = 0
             for l in range(samples):
@@ -75,8 +77,8 @@ for i in range(img.size[0]):
             # optical depth of PA
             Dpa = pP*AP
             # Tcp*Tpa
-            Trans = np.exp(-fun.rayleigh_coeff_sea*Dcp*Dpa)
-            sumT = Trans*pP
+            Trans = np.exp(-fun.rayleigh_coeff_sea*(Dcp+Dpa))
+            sumT += Trans*fun.density_ratio(hP)
         # total intensity at pixel
         I = fun.sun*fun.rayleigh_coeff_sea*fun.phase_rayleigh(angle)*sumT*AP
         # convert to RGB
