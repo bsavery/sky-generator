@@ -11,9 +11,9 @@ import variables as var
 height = 0                                                  # position of camera from sea level (m) (max: 60km)
 cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)   # position of camera
 earth_center = np.array([0, 0, 0])                          # center of Earth
-samples = 40                                                # number of divisions for the rays
+samples = 10                                                # number of divisions for the rays
 # Sun rotation
-sun_lat = math.radians(70)
+sun_lat = math.radians(90)
 sun_lon = math.radians(0)
 # normalize sun rotation
 sun_rot = fun.normalize(sun_lat, sun_lon)
@@ -26,13 +26,16 @@ pixelsy = 64
 img = Image.new('RGB', (pixelsx, pixelsy), "black")
 pixels = img.load()
 
+
 for i in range(img.size[0]):
     for j in range(img.size[1]):
         # camera rotation
         cam_lat = math.radians(j/pixelsy*90)
-        cam_lon = math.radians(i/pixelsx*360)
+        cam_lon = math.radians(i/pixelsx*360-180)
         # normalize camera rotation
         cam_rot = fun.normalize(cam_lat, cam_lon)
+        # angle between camera and sun directions
+        angle = math.acos((cam_rot[0]*sun_rot[0]+cam_rot[1]*sun_rot[1]+cam_rot[2]*sun_rot[2])/(fun.module(cam_rot)*fun.module(sun_rot)))
         # intersection between camera and top of atmosphere
         B = fun.sphere_intersection(cam_pos, cam_rot, earth_center, var.Ra)
         # distance from camera to top of atmosphere
@@ -75,7 +78,7 @@ for i in range(img.size[0]):
             Trans = np.exp(-fun.rayleigh_coeff_sea*Dcp*Dpa)
             sumT = Trans*pP
         # total intensity at pixel
-        I = fun.sun*fun.rayleigh_coeff_sea*fun.phase_rayleigh(sun_lat)*sumT*AP
+        I = fun.sun*fun.rayleigh_coeff_sea*fun.phase_rayleigh(angle)*sumT*AP
         # convert to RGB
         rgb = spec.cs_srgb.spec_to_rgb(I)
 

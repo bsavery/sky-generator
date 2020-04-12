@@ -1,7 +1,6 @@
 # Libraries
 import math
 import numpy as np
-import functions as fun
 
 
 def xyz_from_xy(x, y):
