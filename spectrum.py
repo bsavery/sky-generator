@@ -9,6 +9,7 @@ def xyz_from_xy(x, y):
 class ColourSystem:
     # The CIE colour matching function for 380 - 780 nm in 5 nm intervals
     cmf = np.loadtxt('cie-cmf.txt', usecols=(1,2,3))
+
     def __init__(self, red, green, blue, white):
         # Chromaticities
         self.red, self.green, self.blue = red, green, blue
@@ -28,9 +29,8 @@ class ColourSystem:
             rgb += w
         if not np.all(rgb==0):
             rgb /= np.max(rgb)
-        rgb = rgb * 255
-        rgb = rgb.astype(int)
-        rgb_tuple = tuple(rgb)
+        rgb *= 255
+        rgb_tuple = tuple(rgb.astype(int))
         return rgb_tuple
 
     def spec_to_xyz(self, spec):

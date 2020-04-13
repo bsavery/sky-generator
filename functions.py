@@ -2,6 +2,7 @@
 import math
 import numpy as np
 import variables as var
+import spectrum as spec
 
 
 # wavelengths every 5nm
@@ -35,3 +36,55 @@ def normalize(lat, lon):
 
 def module(P):
     return math.sqrt(P[0]**2+P[1]**2+P[2]**2)
+
+
+def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
+    # angle between camera and sun directions
+    angle = math.acos((cam_rot[0]*sun_rot[0]+cam_rot[1]*sun_rot[1]+cam_rot[2]*sun_rot[2])/(module(cam_rot)*module(sun_rot)))
+    # intersection between camera and top of atmosphere
+    B = sphere_intersection(cam_pos, cam_rot, earth_center, var.Ra)
+    # distance from camera to top of atmosphere
+    AB = distance_points(cam_pos, B)
+    # length of each inscattering step
+    AP = AB/samples
+
+    pP = 0
+    sumT = 0
+    for k in range(samples):
+        # distance between each sample point and A
+        d = k*AP+AP/2
+        # point for inscattering
+        P = cam_pos+d*cam_rot
+        # intersection between P and top of atmosphere
+        C = sphere_intersection(P, sun_rot, earth_center, var.Ra)
+        # distance from P to top of atmosphere
+        PC = distance_points(P, C)
+        # length of each outscattering step
+        ds = PC/samples
+        pQ = 0
+        for l in range(samples):
+            # distance between each sample point and P
+            d = l*ds+ds/2
+            # point for outscattering
+            Q = P+d*sun_rot
+            # height of Q from sea level
+            hQ = distance_points(earth_center, Q)-var.Re
+            # density ratio for each Q point
+            pQ += density_ratio(hQ)
+        # optical depth of CP
+        Dcp = pQ*ds
+        # height of P from sea level
+        hP = distance_points(earth_center, P)-var.Re
+        # density ratio for each P point
+        pP += density_ratio(hP)
+        # optical depth of PA
+        Dpa = pP*AP
+        # Tcp*Tpa
+        Trans = np.exp(-rayleigh_coeff_sea*(Dcp+Dpa))
+        sumT += Trans*density_ratio(hP)
+    # total intensity at pixel
+    I = sun*rayleigh_coeff_sea*phase_rayleigh(angle)*sumT*AP
+    # convert to RGB
+    rgb = spec.cs_srgb.spec_to_rgb(I)
+    
+    return rgb
