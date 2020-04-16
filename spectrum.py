@@ -30,8 +30,7 @@ class ColourSystem:
         if not np.all(rgb==0):
             rgb /= np.max(rgb)
         rgb *= 255
-        rgb_tuple = tuple(rgb.astype(int))
-        return rgb_tuple
+        return rgb.astype(int)
 
     def spec_to_xyz(self, spec):
         XYZ = np.sum(spec[:, np.newaxis] * self.cmf, axis=0)
