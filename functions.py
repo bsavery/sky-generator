@@ -2,11 +2,12 @@
 import math
 import numpy as np
 import variables as var
-import spectrum as spec
+import colour
 
 
 # wavelengths every 5nm
 lam = np.arange(380., 781., 5)*10**-9
+lamnm = np.arange(380, 781, 5)
 # blackbody radiation (TO VERIFY!!)
 sun = (2*math.pi*var.h*var.c**2)/(lam**5*(np.exp((var.h*var.c)/(var.k*var.T*lam))-1))*10**-9
 # irradiance on top of atmosphere
@@ -40,61 +41,8 @@ def normalize(lat, lon):
 def angle_vectors(rot1, rot2):
     return math.acos(rot1[0]*rot2[0]+rot1[1]*rot2[1]+rot1[2]*rot2[2])
 
-'''
+
 def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
-    # angle between camera and sun directions
-    angle = angle_vectors(cam_rot, sun_rot)
-    # intersection between camera and top of atmosphere
-    B = sphere_intersection(cam_pos, cam_rot, earth_center, var.Ra)
-    # distance from camera to top of atmosphere
-    AB = distance_points(cam_pos, B)
-    # length of each inscattering step
-    AP = AB/samples
-
-    pP = 0
-    sumT = 0
-    for k in range(samples):
-        # distance between each sample point and A
-        d = k*AP+AP/2
-        # point for inscattering
-        P = cam_pos+d*cam_rot
-        # intersection between P and top of atmosphere
-        C = sphere_intersection(P, sun_rot, earth_center, var.Ra)
-        # distance from P to top of atmosphere
-        PC = distance_points(P, C)
-        # length of each outscattering step
-        ds = PC/samples
-        pQ = 0
-        for l in range(samples):
-            # distance between each sample point and P
-            d = l*ds+ds/2
-            # point for outscattering
-            Q = P+d*sun_rot
-            # height of Q from sea level
-            hQ = distance_points(earth_center, Q)-var.Re
-            # density ratio for each Q point
-            pQ += density_ratio(hQ, var.Hr)
-        # optical depth of CP
-        Dcp = pQ*ds
-        # height of P from sea level
-        hP = distance_points(earth_center, P)-var.Re
-        # density ratio for each P point
-        D = density_ratio(hP, var.Hr)
-        pP += D
-        # optical depth of PA
-        Dpa = pP*AP
-        # Tcp*Tpa
-        Trans = np.exp(-rayleigh_coeff*(Dcp+Dpa))
-        sumT += Trans*D
-    # total intensity at pixel
-    I = sun*rayleigh_coeff*phase_rayleigh(angle)*sumT*AP
-    # convert to RGB
-    rgb = spec.cs_srgb.spec_to_rgb(I)
-    
-    return rgb
-'''
-
-def get_rgb1(sun_rot, cam_pos, cam_rot, earth_center, samples):
     # intersection between camera and top of atmosphere
     B = sphere_intersection(cam_pos, cam_rot, earth_center, var.Ra)
     # distance from camera to top of atmosphere
@@ -154,6 +102,19 @@ def get_rgb1(sun_rot, cam_pos, cam_rot, earth_center, samples):
     # total intensity at pixel
     I = sun*(sumR*rayleigh_coeff*phaseR+sumM*var.mie_coeff*phaseM)
     # convert to RGB
-    rgb = spec.cs_srgb.spec_to_rgb(I)
-    
-    return rgb
+    #rgb = spec.cs_srgb.spec_to_rgb(I)
+
+    data = {}
+    for A, B in zip(lamnm, I):
+        data[A] = B/5500
+    sd = colour.SpectralDistribution(data)
+    cmfs = colour.STANDARD_OBSERVERS_CMFS['CIE 1931 2 Degree Standard Observer']
+    illuminant = colour.ILLUMINANTS_SDS['D65']
+    # Calculating the sample spectral distribution *CIE XYZ* tristimulus values.
+    XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
+    # The output domain of *colour.sd_to_XYZ* is [0, 100] and the input
+    # domain of *colour.XYZ_to_sRGB* is [0, 1]. It needs to be accounted for,
+    # thus the input *CIE XYZ* tristimulus values are scaled.
+    RGB = colour.XYZ_to_sRGB(XYZ/100)*255
+
+    return RGB

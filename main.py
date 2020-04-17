@@ -2,7 +2,6 @@
 import math
 import numpy as np
 from PIL import Image
-import spectrum as spec
 import functions as fun
 import variables as var
 from multiprocessing import Process, Array
@@ -38,10 +37,10 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             cam_lon = math.radians(i/pixelsx*360-180)
             # normalize camera rotation
             cam_rot = fun.normalize(cam_lat, cam_lon)
-            rgb = fun.get_rgb1(sun_rot, cam_pos, cam_rot, earth_center, samples)
+            rgb = fun.get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples)
             # print to pixels array
             for l in range(3):
-                pix[i*3*pixelsy+j*3+l] = rgb[l]
+                pix[i*3*pixelsy+j*3+l] = int(rgb[l])
 
 
 def multithread():
