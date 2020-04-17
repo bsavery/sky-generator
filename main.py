@@ -1,10 +1,10 @@
 # Libraries
 import math
+from multiprocessing import Process, Array
 import numpy as np
 from PIL import Image
 import functions as fun
 import variables as var
-from multiprocessing import Process, Array
 
 
 # Geometry
@@ -16,11 +16,11 @@ sun_lat = math.radians(60)
 sun_lon = math.radians(0)
 # normalize sun rotation
 sun_rot = fun.normalize(sun_lat, sun_lon)
-# divisions of the rays
+# divisions of the rays (more divisions make more accurate results)
 samples = 20
-# number of processes (final number is squared)
+# number of processes (squared number must be near the number of logic processors of the CPU)
 nproc = 3
-# image size
+# image size (in pixels)
 pixelsx = 128
 pixelsy = 64
 
@@ -37,15 +37,18 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             cam_lon = math.radians(i/pixelsx*360-180)
             # normalize camera rotation
             cam_rot = fun.normalize(cam_lat, cam_lon)
+            # get pixel rgb
             rgb = fun.get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples)
-            # print to pixels array
+            # print to pixels array in shared memory
             for l in range(3):
                 pix[i*3*pixelsy+j*3+l] = int(rgb[l])
 
 
-def multithread():
+def multiprocess():
     processes = []
+    # create shared memory array (that can be accessed by multiple processes at the same time)
     pix = Array('i', pixelsx*pixelsy*3)
+    # split the image in nproc**2 processes
     for i in range(nproc):
         for j in range(nproc):
             p = Process(target=calc_pixel, args=(
@@ -53,19 +56,17 @@ def multithread():
             ))
             processes.append(p)
             p.start()
-    
+    # wait until all processes end
     for p in processes:
         p.join()
-
     # print to final pixels
     for i in range(pixelsx):
         for j in range(pixelsy):
             pixels[i, j] = (pix[i*3*pixelsy+j*3], pix[i*3*pixelsy+j*3+1], pix[i*3*pixelsy+j*3+2])
-    
     # open image
     img.show()
 
 
 # multiprocessing
 if __name__ == '__main__':
-    multithread()
+    multiprocess()

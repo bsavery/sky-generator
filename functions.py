@@ -14,6 +14,9 @@ sun = (2*math.pi*var.h*var.c**2)/(lam**5*(np.exp((var.h*var.c)/(var.k*var.T*lam)
 I = sun*(var.Rs**2/var.distance**2)
 # Rayleigh coefficient (at sea level)
 rayleigh_coeff = (8*math.pi**3*(var.n**2-1)**2)/3*(1/var.N)*(1/lam**4)
+# define color data
+cmfs = colour.STANDARD_OBSERVERS_CMFS['CIE 1931 2 Degree Standard Observer']
+illuminant = colour.ILLUMINANTS_SDS['D65']
 
 
 def density_ratio(height, scale):
@@ -41,6 +44,18 @@ def normalize(lat, lon):
 def angle_vectors(rot1, rot2):
     return math.acos(rot1[0]*rot2[0]+rot1[1]*rot2[1]+rot1[2]*rot2[2])
 
+def spec_to_srgb(spec):
+    data = {}
+    for A, B in zip(lamnm, spec):
+        data[A] = B/5500
+    sd = colour.SpectralDistribution(data)
+    # Calculating the sample spectral distribution *CIE XYZ* tristimulus values.
+    XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
+    # The output domain of *colour.sd_to_XYZ* is [0, 100] and the input
+    # domain of *colour.XYZ_to_sRGB* is [0, 1]. It needs to be accounted for,
+    # thus the input *CIE XYZ* tristimulus values are scaled.
+    return colour.XYZ_to_sRGB(XYZ/100)*255
+
 
 def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
     # intersection between camera and top of atmosphere
@@ -62,9 +77,9 @@ def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
     # for each point along AB
     for i in range(samples):
         # distance between each sample point and A
-        distance = i*segment+segment/2
+        distA = i*segment+segment/2
         # point for inscattering
-        P = cam_pos+distance*cam_rot
+        P = cam_pos+distA*cam_rot
         # height of P from sea level
         height = distance_points(earth_center, P)-var.Re
         # optical depth for light
@@ -84,10 +99,10 @@ def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
 
         # for each point along PA
         for j in range(samples):
-            # distance between P and sample point
-            d = j*ds+ds/2
+            # distance between each sample point and P
+            distP = j*ds+ds/2
             # point for outscattering
-            Q = P+d*sun_rot
+            Q = P+distP*sun_rot
             # height of Q from sea level
             height_light = distance_points(earth_center, Q)-var.Re
             # optical depth
@@ -101,20 +116,7 @@ def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
 
     # total intensity at pixel
     I = sun*(sumR*rayleigh_coeff*phaseR+sumM*var.mie_coeff*phaseM)
-    # convert to RGB
-    #rgb = spec.cs_srgb.spec_to_rgb(I)
+    # convert to srgb
+    rgb = spec_to_srgb(I)
 
-    data = {}
-    for A, B in zip(lamnm, I):
-        data[A] = B/5500
-    sd = colour.SpectralDistribution(data)
-    cmfs = colour.STANDARD_OBSERVERS_CMFS['CIE 1931 2 Degree Standard Observer']
-    illuminant = colour.ILLUMINANTS_SDS['D65']
-    # Calculating the sample spectral distribution *CIE XYZ* tristimulus values.
-    XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
-    # The output domain of *colour.sd_to_XYZ* is [0, 100] and the input
-    # domain of *colour.XYZ_to_sRGB* is [0, 1]. It needs to be accounted for,
-    # thus the input *CIE XYZ* tristimulus values are scaled.
-    RGB = colour.XYZ_to_sRGB(XYZ/100)*255
-
-    return RGB
+    return rgb
