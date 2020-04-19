@@ -7,15 +7,12 @@ import functions as fun
 import variables as var
 
 
-# Geometry
-height = 1                                                  # position of camera from sea level (m) (max: 60km)
-cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)   # position of camera
-earth_center = np.array([0, 0, 0])                          # center of Earth
-# Sun rotation
-sun_lat = math.radians(60)
-sun_lon = math.radians(0)
-# normalize sun rotation
-sun_rot = fun.normalize(sun_lat, 0)
+# Properties
+# camera altitude from sea level (m) (max: 60km)
+height = 1
+# sun rotation (latitude and longitude)
+sun_lat = 5
+sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
 samples = 20
 # number of processes (squared number must be near the number of logic processors of the CPU)
@@ -23,27 +20,22 @@ nproc = 3
 # image size (in pixels)
 pixelsx = 128
 pixelsy = 64
+# save image
+save_img = False
 
+
+# Definitions
+# position of camera
+cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)
+# center of Earth
+earth_center = np.array([0, 0, 0])
+# normalize sun rotation
+sun_la = math.radians(sun_lat)
+sun_lo = math.radians(sun_lon)
+sun_rot = fun.normalize(sun_la, 0)
 # image definition
 img = Image.new('RGB', (pixelsx, pixelsy), "black")
-pixels = img.load()
-img_shifted = Image.new('RGB', (pixelsx, pixelsy), "black")
-pixels_shifted = img_shifted.load()
-
-
-def calc_pixel(xmin, xmax, ymin, ymax, pix):
-    for i in range(xmin, xmax):
-        for j in range(ymin, ymax):
-            # camera rotation
-            cam_lat = math.radians((1-j/pixelsy)*90)
-            cam_lon = math.radians(i/pixelsx*360-180)
-            # normalize camera rotation
-            cam_rot = fun.normalize(cam_lat, cam_lon)
-            # get pixel rgb
-            rgb = fun.get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples)
-            # print to pixels array in shared memory
-            for l in range(3):
-                pix[i*3*pixelsy+j*3+l] = int(rgb[l])
+pixels_shifted = img.load()
 
 
 def multiprocess():
@@ -63,25 +55,43 @@ def multiprocess():
     for p in processes:
         p.join()
     # print to final pixels
+    pixels = np.zeros([pixelsx, pixelsy, 3], dtype=np.int)
     for i in range(halfx):
         for j in range(pixelsy):
-            pixels[i, j] = (pix[i*3*pixelsy+j*3], pix[i*3*pixelsy+j*3+1], pix[i*3*pixelsy+j*3+2])
-            pixels[pixelsx-i-1, j] = (pix[i*3*pixelsy+j*3], pix[i*3*pixelsy+j*3+1], pix[i*3*pixelsy+j*3+2])
+            pixels[i][j] = [pix[i*3*pixelsy+j*3], pix[i*3*pixelsy+j*3+1], pix[i*3*pixelsy+j*3+2]]
+            pixels[pixelsx-i-1][j] = [pix[i*3*pixelsy+j*3], pix[i*3*pixelsy+j*3+1], pix[i*3*pixelsy+j*3+2]]
     # shift pixels with sun lon change
-    shift = int(sun_lon/(math.pi*2)*pixelsx)
+    shift = sun_lon/360*pixelsx
     s = 0
     for x in range(pixelsx):
         for y in range(pixelsy):
             if x+shift<pixelsx:
-                pixels_shifted[x+shift, y] = pixels[x, y]
+                pixels_shifted[x+shift, y] = tuple(pixels[x][y])
             else:
                 if s<shift:
-                    pixels_shifted[s, y] = pixels[x, y]
+                    pixels_shifted[s, y] = tuple(pixels[x, y])
                     if y==pixelsy-1:
                         s += 1
-
     # open image
-    img_shifted.show()
+    img.show()
+    # save image
+    if save_img:
+        img.save("sky.png","PNG")
+
+
+def calc_pixel(xmin, xmax, ymin, ymax, pix):
+    for i in range(xmin, xmax):
+        for j in range(ymin, ymax):
+            # camera rotation
+            cam_lat = math.radians((1-j/pixelsy)*90)
+            cam_lon = math.radians(i/pixelsx*360-180)
+            # normalize camera rotation
+            cam_rot = fun.normalize(cam_lat, cam_lon)
+            # get pixel rgb
+            rgb = fun.get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples)
+            # print to pixels array in shared memory
+            for l in range(3):
+                pix[i*3*pixelsy+j*3+l] = int(rgb[l])
 
 
 # multiprocessing
