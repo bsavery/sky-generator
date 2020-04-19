@@ -12,7 +12,7 @@ height = 1                                                  # position of camera
 cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)   # position of camera
 earth_center = np.array([0, 0, 0])                          # center of Earth
 # Sun rotation
-sun_lat = math.radians(60)
+sun_lat = math.radians(5)
 sun_lon = math.radians(0)
 # normalize sun rotation
 sun_rot = fun.normalize(sun_lat, sun_lon)

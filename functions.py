@@ -8,7 +8,7 @@ import colour
 # wavelengths every 5nm
 lam = np.arange(380., 781., 5)*10**-9
 lamnm = np.arange(380, 781, 5)
-# blackbody radiation (TO VERIFY!!)
+# blackbody radiation
 sun = (2*math.pi*var.h*var.c**2)/(lam**5*(np.exp((var.h*var.c)/(var.k*var.T*lam))-1))*10**-9
 # irradiance on top of atmosphere
 I = sun*(var.Rs**2/var.distance**2)
@@ -17,6 +17,8 @@ rayleigh_coeff = (8*math.pi**3*(var.n**2-1)**2)/3*(1/var.N)*(1/lam**4)
 # define color data
 cmfs = colour.STANDARD_OBSERVERS_CMFS['CIE 1931 2 Degree Standard Observer']
 illuminant = colour.ILLUMINANTS_SDS['D65']
+# The CIE colour matching function for 380 - 780 nm in 5 nm intervals
+cmf = np.loadtxt('cie-cmf.txt', usecols=(1,2,3))
 
 
 def density_ratio(height, scale):
@@ -43,18 +45,6 @@ def normalize(lat, lon):
 
 def angle_vectors(rot1, rot2):
     return math.acos(rot1[0]*rot2[0]+rot1[1]*rot2[1]+rot1[2]*rot2[2])
-
-def spec_to_srgb(spec):
-    data = {}
-    for A, B in zip(lamnm, spec):
-        data[A] = B/5500
-    sd = colour.SpectralDistribution(data)
-    # Calculating the sample spectral distribution *CIE XYZ* tristimulus values.
-    XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
-    # The output domain of *colour.sd_to_XYZ* is [0, 100] and the input
-    # domain of *colour.XYZ_to_sRGB* is [0, 1]. It needs to be accounted for,
-    # thus the input *CIE XYZ* tristimulus values are scaled.
-    return colour.XYZ_to_sRGB(XYZ/100)*255
 
 
 def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
@@ -120,3 +110,42 @@ def get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples):
     rgb = spec_to_srgb(I)
 
     return rgb
+
+
+def spec_to_srgb(spec):
+    # spectrum to XYZ
+    spec /= 600000
+    XYZ = np.sum(spec[:, np.newaxis]*cmf, axis=0)*5
+    # XYZ to RGB linear
+    D65 = np.array([[3.2404542, -1.5371385, -0.4985314],
+                [-0.9692660, 1.8760108, 0.0415560],
+                [0.0556434, -0.2040259, 1.0572252]])
+    E = np.array([[2.3706743, -0.9000405, -0.4706338],
+                [-0.5138850, 1.4253036, 0.0885814],
+                [0.0052982, -0.0146949, 1.0093968]])
+    RGBlinear = D65 @ XYZ
+    # RGB linear to sRGB gamma corrected
+    sRGB = [0, 0, 0]
+    for i in range(3):
+        if RGBlinear[i]>0.0031308:
+            sRGB[i] = 1.055*RGBlinear[i]**(1/2.4)-0.055
+        else:
+            sRGB[i] = 12.92*RGBlinear[i]
+    for i in range(3):
+        sRGB[i] *= 255
+
+    return sRGB
+
+
+
+def spec_to_srgb1(spec):
+    data = {}
+    for A, B in zip(lamnm, spec):
+        data[A] = B/5500
+    sd = colour.SpectralDistribution(data)
+    # Calculating the sample spectral distribution *CIE XYZ* tristimulus values.
+    XYZ = colour.sd_to_XYZ(sd, cmfs, illuminant)
+    # The output domain of *colour.sd_to_XYZ* is [0, 100] and the input
+    # domain of *colour.XYZ_to_sRGB* is [0, 1]. It needs to be accounted for,
+    # thus the input *CIE XYZ* tristimulus values are scaled.
+    return colour.XYZ_to_sRGB(XYZ/100)*255
