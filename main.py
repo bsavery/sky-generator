@@ -8,20 +8,21 @@ import variables as var
 
 
 # Properties
-# camera altitude from sea level (m) (max: 60km)
+# camera altitude from sea level (in m, max: 60km)
 height = 1
-# sun rotation (latitude and longitude)
+# sun rotation (latitude and longitude in degrees)
 sun_lat = 5
 sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
 samples = 20
 # number of processes (squared number must be near the number of logic processors of the CPU)
-nproc = 3
+nprocess = 3
 # image size (in pixels)
 pixelsx = 128
 pixelsy = 64
-# save image
+# save image to file in local directory
 save_img = False
+img_name = "sky"
 
 
 # Definitions
@@ -30,9 +31,7 @@ cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)
 # center of Earth
 earth_center = np.array([0, 0, 0])
 # normalize sun rotation
-sun_la = math.radians(sun_lat)
-sun_lo = math.radians(sun_lon)
-sun_rot = fun.normalize(sun_la, 0)
+sun_rot = fun.normalize(math.radians(sun_lat), 0)
 # image definition
 img = Image.new('RGB', (pixelsx, pixelsy), "black")
 pixels_shifted = img.load()
@@ -43,11 +42,11 @@ def multiprocess():
     halfx = int(pixelsx/2)
     # create shared memory array (that can be accessed by multiple processes at the same time)
     pix = Array('i', halfx*pixelsy*3)
-    # split the image in nproc**2 processes
-    for i in range(nproc):
-        for j in range(nproc):
+    # split the image in nprocess**2 processes
+    for i in range(nprocess):
+        for j in range(nprocess):
             p = Process(target=calc_pixel, args=(
-                int((halfx/nproc)*j), int((halfx/nproc)*(j+1)), int((pixelsy/nproc)*i), int((pixelsy/nproc)*(i+1)), pix,
+                int((halfx/nprocess)*j), int((halfx/nprocess)*(j+1)), int((pixelsy/nprocess)*i), int((pixelsy/nprocess)*(i+1)), pix,
             ))
             processes.append(p)
             p.start()
@@ -76,7 +75,7 @@ def multiprocess():
     img.show()
     # save image
     if save_img:
-        img.save("sky.png","PNG")
+        img.save(img_name+".png","PNG")
 
 
 def calc_pixel(xmin, xmax, ymin, ymax, pix):
@@ -91,7 +90,7 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             rgb = fun.get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples)
             # print to pixels array in shared memory
             for l in range(3):
-                pix[i*3*pixelsy+j*3+l] = int(rgb[l])
+                pix[i*3*pixelsy+j*3+l] = int(rgb[l]*255)
 
 
 # multiprocessing
