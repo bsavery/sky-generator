@@ -11,10 +11,11 @@ import variables as var
 # camera altitude from sea level (in m, max: 60km)
 height = 1
 # sun rotation (latitude and longitude in degrees)
-sun_lat = 5
+sun_lat = 3
 sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
-samples = 20
+samples = 32
+samples_light = 16
 # number of processes (squared number must be near the number of logic processors of the CPU)
 nprocess = 3
 # image size (in pixels)
@@ -28,8 +29,6 @@ img_name = "sky"
 # Definitions
 # position of camera
 cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)
-# center of Earth
-earth_center = np.array([0, 0, 0])
 # normalize sun rotation
 sun_rot = fun.normalize(math.radians(sun_lat), 0)
 # image definition
@@ -87,7 +86,9 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             # normalize camera rotation
             cam_rot = fun.normalize(cam_lat, cam_lon)
             # get pixel rgb
-            rgb = fun.get_rgb(sun_rot, cam_pos, cam_rot, earth_center, samples)
+            I = fun.intensity(sun_rot, cam_pos, cam_rot, samples, samples_light)
+            # convert to srgb
+            rgb = fun.spec_to_srgb(I)
             # print to pixels array in shared memory
             for l in range(3):
                 pix[i*3*pixelsy+j*3+l] = int(rgb[l]*255)
