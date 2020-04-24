@@ -1,5 +1,5 @@
 # Libraries
-from math import acos, cos, exp, pi, sin, sqrt
+from math import acos, ceil, cos, exp, pi, sin, sqrt
 import numpy as np
 import variables as var
 
@@ -104,9 +104,12 @@ def intensity(sun_rot, cam_pos, cam_rot, samples, samples_light):
         #densityO = 0
         # length of each outscattering step
         segment_light = PC/samples
-
+        # adaptive samples
+        adaptive_samples = ceil((segment_light/segment)*samples_light)
+        if adaptive_samples>samples_light:
+            adaptive_samples = samples_light
         # for each point along PA
-        for j in range(samples_light):
+        for j in range(adaptive_samples):
             # distance between each sample point and P
             step_light = j*segment_light+segment_light/2
             # point for outscattering
