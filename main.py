@@ -12,7 +12,7 @@ import imageio
 # camera altitude from sea level (in m, max: 60km)
 height = 1
 # sun rotation (latitude and longitude in degrees)
-sun_lat = 30
+sun_lat = 3
 sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
 samples = 32
@@ -20,7 +20,7 @@ samples_light = 16
 # number of processes (squared number must be near the number of logic processors of the CPU)
 nprocess = 3
 # image size (in pixels)
-pixelsx = 128
+pixelsx = 256
 pixelsy = int(pixelsx/2)
 # render without black bottom
 half = True
@@ -88,8 +88,7 @@ def multiprocess():
                         pixels_shifted[s, y] = tuple(pixels[x, y])
                         if y==pixelsy-1:
                             s += 1
-
-    # open image
+    # show image
     if not linear:
         img.show()
     # save image
@@ -114,11 +113,11 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             rgb = fun.spec_to_srgb(I, linear, exposure)
             # print to pixels array in shared memory
             if linear:
-                for l in range(3):
-                    pix[i*3*halfy+j*3+l] = rgb[l]
+                for k in range(3):
+                    pix[i*3*halfy+j*3+k] = rgb[k]
             else:
-                for l in range(3):
-                    pix[i*3*halfy+j*3+l] = int(rgb[l]*255)
+                for k in range(3):
+                    pix[i*3*halfy+j*3+k] = int(rgb[k]*255)
 
 
 # multiprocessing
