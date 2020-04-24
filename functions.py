@@ -72,10 +72,10 @@ def intensity(sun_rot, cam_pos, cam_rot, samples, samples_light):
     # Rayleigh and Mie contribution
     sumR = 0
     sumM = 0
-    sumO = 0
+    #sumO = 0
     optical_depthR = 0
     optical_depthM = 0
-    optical_depthO = 0
+    #optical_depthO = 0
     phaseR = phase_rayleigh(mu)
     phaseM = phase_mie(mu)
 
@@ -90,18 +90,18 @@ def intensity(sun_rot, cam_pos, cam_rot, samples, samples_light):
         # optical depth
         pr = density_rayleigh(height)*segment
         pm = density_mie(height)*segment
-        po = density_ozone(height)*segment
+        #po = density_ozone(height)*segment
         optical_depthR += pr
         optical_depthM += pm
-        optical_depthO += po
+        #optical_depthO += po
         # intersection between P and top of atmosphere
         C = sphere_intersection(P, sun_rot, var.earth_center, var.Ra)
         # distance from P to top of atmosphere
         PC = distance(P, C)
         # variables
-        optical_depth_lightR = 0
-        optical_depth_lightM = 0
-        optical_depth_lightO = 0
+        densityR = 0
+        densityM = 0
+        #densityO = 0
         # length of each outscattering step
         segment_light = PC/samples
 
@@ -114,36 +114,44 @@ def intensity(sun_rot, cam_pos, cam_rot, samples, samples_light):
             # height of Q from sea level
             height_light = distance(var.earth_center, Q)-var.Re
             # optical depth
-            optical_depth_lightR += density_rayleigh(height_light)*segment_light
-            optical_depth_lightM += density_mie(height_light)*segment_light
-            optical_depth_lightO += density_ozone(height_light)*segment_light
+            densityR += density_rayleigh(height_light)
+            densityM += density_mie(height_light)
+            #densityO += density_ozone(height_light)
+        # optical depth
+        optical_depth_lightR = densityR*segment_light
+        optical_depth_lightM = densityM*segment_light
+        #optical_depth_lightO = densityO*segment_light
  
         #transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR) + 1.11*mie_coeff*(optical_depthM+optical_depth_lightM) + ozone_coeff*(optical_depthO+optical_depth_lightO)
         transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR) + 1.11*mie_coeff*(optical_depthM+optical_depth_lightM)
         attenuation = np.exp(-transmittance)
         sumR += attenuation*pr
         sumM += attenuation*pm
-        sumO += attenuation*po
+        #sumO += attenuation*po
 
     # total intensity at pixel
     #return sun*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM + sumO*ozone_coeff)
     return sun*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM)
 
 
-def spec_to_srgb(spec):
+def spec_to_srgb(spec, linear, exposure):
     # spectrum to XYZ
     XYZ = (np.sum(spec[:, np.newaxis]*cmf, axis=0)*5*10**-9)*683
     # XYZ to sRGB linear
-    sRGBlinear = (var.D65 @ XYZ)*2
-    # sRGB linear to sRGB gamma corrected
-    sRGB = [0, 0, 0]
-    for i in range(3):
-        if sRGBlinear[i]>0.0031308:
-            sRGB[i] = 1.055*sRGBlinear[i]**(1/2.4)-0.055
-        else:
-            sRGB[i] = 12.92*sRGBlinear[i]
+    sRGBlinear = (var.D65 @ XYZ)
+    if linear:
+        return sRGBlinear
+    # sRGB linear to non-linear sRGB gamma corrected
+    else:
+        sRGBlinear *= exposure
+        sRGB = [0, 0, 0]
+        for i in range(3):
+            if sRGBlinear[i]>0.0031308:
+                sRGB[i] = 1.055*sRGBlinear[i]**(1/2.4)-0.055
+            else:
+                sRGB[i] = 12.92*sRGBlinear[i]
+        return sRGB
 
-    return sRGB
 
 '''
 samples = 10
