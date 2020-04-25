@@ -3,40 +3,26 @@ from math import radians
 from multiprocessing import Process, Array
 import numpy as np
 from PIL import Image
-import functions as fun
-import variables as var
 import imageio
-
-
-# Properties
-# camera altitude from sea level (in m, max: 60km)
-height = 1
-# sun rotation (latitude and longitude in degrees)
-sun_lat = 3
-sun_lon = 0
-# divisions of the rays (more divisions make more accurate results)
-samples = 32
-samples_light = 16
-# number of processes (squared number must be near the number of logic processors of the CPU)
-nprocess = 3
-# image size (in pixels)
-pixelsx = 256
-pixelsy = int(pixelsx/2)
-# render without black bottom
-half = True
-# save EXR image
-linear = False
-# save PNG image
-save_img = False
-exposure = 2
-img_name = "sky"
+import functions as fun
+import properties as prop
+import light
 
 
 # Definitions
-# position of camera
-cam_pos = np.array([0, 0, var.Re+height], dtype=np.int64)
-# normalize sun rotation
-sun_rot = fun.normalize(radians(sun_lat), 0)
+height = prop.height
+sun_lat = prop.sun_lat
+sun_lon = prop.sun_lon
+pixelsx = prop.pixelsx
+pixelsy = prop.pixelsy
+half = prop.half
+nprocess = prop.nprocess
+linear = prop.linear
+img_name = prop.img_name
+save_img = prop.save_img
+exposure = prop.exposure
+cam_pos = prop.cam_pos
+sun_rot = prop.sun_rot
 # image definition
 halfx = int(pixelsx/2)
 halfy = int(pixelsy/2)
@@ -108,7 +94,7 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             # normalize camera rotation
             cam_rot = fun.normalize(cam_lat, cam_lon)
             # get rgb pixel
-            I = fun.intensity(sun_rot, cam_pos, cam_rot, samples, samples_light)
+            I = light.single_scattering(cam_pos, cam_rot)
             # convert to srgb
             rgb = fun.spec_to_srgb(I, linear, exposure)
             # print to pixels array in shared memory
