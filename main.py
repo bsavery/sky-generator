@@ -94,7 +94,8 @@ def calc_pixel(xmin, xmax, ymin, ymax, pix):
             # normalize camera rotation
             cam_rot = fun.normalize(cam_lat, cam_lon)
             # get rgb pixel
-            I = light.single_scattering(cam_pos, cam_rot)
+            I = light.multiple_scattering(cam_pos, cam_rot)
+            #I = light.single_scattering(cam_pos, cam_rot)
             # convert to srgb
             rgb = fun.spec_to_srgb(I, linear, exposure)
             # print to pixels array in shared memory

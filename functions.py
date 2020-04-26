@@ -1,5 +1,5 @@
 # Libraries
-from math import ceil, cos, exp, pi, radians, sin, sqrt
+from math import ceil, cos, exp, pi, radians, sin, sqrt, pow, radians
 import numpy as np
 import constants as con
 
@@ -27,15 +27,36 @@ def phase_rayleigh(mu):
 def phase_mie(mu):
     return (3*(1-con.g**2)*(1+mu**2))/(8*pi*(2+con.g**2)*(1+con.g**2-2*con.g*mu)**1.5)
 
-def sphere_intersection(pos, rot, radius):
-    a = rot[0]**2+rot[1]**2+rot[2]**2
+def atmosphere_intersection(pos, rot):
+    a = pow(rot[0], 2)+pow(rot[1], 2)+pow(rot[2], 2)
     b = -2*(rot[0]*(-pos[0])+rot[1]*(-pos[1])+rot[2]*(-pos[2]))
-    c = (-pos[0])**2+(-pos[1])**2+(-pos[2])**2-radius**2
-    t = (-b+sqrt(b**2-4*a*c))/2*a
+    c = pow(-pos[0], 2)+pow(-pos[1], 2)+pow(-pos[2], 2)-con.Ra**2
+    t = (-b+sqrt(pow(b, 2)-4*a*c))/(2*a)
     return np.array([pos[0]+rot[0]*t, pos[1]+rot[1]*t, pos[2]+rot[2]*t])
 
 def normalize(lat, lon):
     return np.array([cos(lat)*cos(lon), cos(lat)*sin(lon), sin(lat)])
+
+def surface_intersection(pos, rot):
+    if rot[2]>=0:
+        return False
+    x = -pos[0]
+    y = -pos[1]
+    z = -pos[2]
+    i = rot[0]
+    j = rot[1]
+    k = rot[2]
+    t = (x*i+y*j+z*k)/(pow(i, 2)+pow(j, 2)+pow(k, 2))
+    D = pow(x, 2)-2*x*i*t+pow(i*t,2)+pow(y, 2)-2*y*j*t+pow(j*t, 2)+pow(z, 2)-2*z*k*t+pow(k*t, 2)
+    if D<=con.Re**2:
+        return True
+    else:
+        return False
+'''
+rot = normalize(radians(10), radians(0))
+print(rot)
+print(surface_intersection(np.array([0, 0, 6360100]), rot))
+'''
 
 def spec_to_srgb(spec, linear, exposure):
     # spectrum to XYZ
