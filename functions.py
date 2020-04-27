@@ -19,7 +19,7 @@ def density_ozone(height):
         p = 0.295*height-3.18
     elif height>=37.33:
         p = 106*exp(-0.0729*height)
-    return p*10**-9
+    return (p/5)*10**-9
 
 def phase_rayleigh(mu):
     return 3/(16*pi)*(1+mu**2)
@@ -52,11 +52,6 @@ def surface_intersection(pos, rot):
         return True
     else:
         return False
-'''
-rot = normalize(radians(10), radians(0))
-print(rot)
-print(surface_intersection(np.array([0, 0, 6360100]), rot))
-'''
 
 def spec_to_srgb(spec, linear, exposure):
     # spectrum to XYZ

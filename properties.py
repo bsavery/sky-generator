@@ -7,9 +7,9 @@ import numpy as np
 
 # Properties
 # camera altitude from sea level (in m, max: 60km)
-height = 100
+height = 10
 # sun rotation (latitude and longitude in degrees)
-sun_lat = 60
+sun_lat = -2
 sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
 samples = 16
@@ -17,7 +17,7 @@ samples_light = 8
 # number of processes (squared number must be near the number of logic processors of the CPU)
 nprocess = 3
 # image size (in pixels)
-pixelsx = 64
+pixelsx = 256
 pixelsy = int(pixelsx/2)
 # render without black bottom
 half = True
@@ -25,7 +25,7 @@ half = True
 linear = False
 # save PNG image
 save_img = False
-exposure = 2
+exposure = 10
 img_name = "sky"
 
 

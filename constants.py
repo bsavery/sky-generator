@@ -42,5 +42,5 @@ I = sun*(Rs**2/distance**2)
 rayleigh_coeff = ((8*pi**3)*(n**2-1)**2)/(3*N*lam**4)
 # Mie scattering coefficient (m^-1)
 mie_coeff = (21*10**-6)*1.11
-# TO VERIFY!!! Ozone cross section (in cm^2/molecule) to absorption coefficient (m^-1)
+# Ozone cross section (in cm^2/molecule) to absorption coefficient (m^-1)
 ozone_coeff = np.loadtxt('ozone.txt', usecols=(1))*10**-4*N
