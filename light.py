@@ -1,9 +1,11 @@
 # Libraries
-from math import ceil, cos, exp, pi, radians, sin, sqrt
+from math import ceil, cos, degrees, exp, pi, radians, sin, sqrt
 import numpy as np
 import constants as con
 import properties as prop
 import functions as fun
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # Definitions
@@ -344,12 +346,31 @@ def single_scattering_mie(cam_pos, cam_rot):
 
 
 ############################################################################
-ray1 = fun.normalize(radians(0), radians(0))
-ray2 = fun.normalize(radians(60), radians(0))
-ray3 = fun.normalize(radians(60), radians(180))
-ray4 = fun.normalize(radians(0), radians(180))
-ray5 = fun.normalize(radians(-60), radians(180))
-ray6 = fun.normalize(radians(-60), radians(0))
+
+N = 14
+rays = np.zeros([N+1,3], dtype=np.float)
+a = 4*pi/N
+d = sqrt(a)
+Mo = round(pi/d)
+do = pi/Mo
+dy = a/do
+flag = 0
+for m in range(Mo):
+    O = pi*(m+0.5)/Mo
+    My = round(2*pi*sin(O)/dy)
+    for n in range(My):
+        y = 2*pi*n/My
+        rays[flag] = np.array([sin(O)*cos(y), sin(O)*sin(y), cos(O)])
+        flag += 1
+
+x = rays[:,0]
+y = rays[:,1]
+z = rays[:,2]
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.scatter(x, y, z)
+plt.show()
+
 
 def gathered_light_rayleigh(point, dir):
     angle1 = np.dot(dir, ray1)
