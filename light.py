@@ -187,11 +187,7 @@ def single_scattering_rayleigh(cam_pos, cam_rot):
         mu = np.dot(cam_rot, sun_rot)
         # Rayleigh and Mie contribution
         sumR = 0
-        #sumM = 0
-        #sumO = 0
         optical_depthR = 0
-        #optical_depthM = 0
-        #optical_depthO = 0
         phaseR = fun.phase_rayleigh(mu)
         #phaseM = phase_mie(mu)
 
@@ -205,11 +201,7 @@ def single_scattering_rayleigh(cam_pos, cam_rot):
             height = np.linalg.norm(con.earth_center-P)-con.Re
             # optical depth
             pr = fun.density_rayleigh(height)*segment
-            #pm = density_mie(height)*segment
-            #po = density_ozone(height)*segment
             optical_depthR += pr
-            #optical_depthM += pm
-            #optical_depthO += po
             if not fun.surface_intersection(P, sun_rot):
                 # intersection between P and top of atmosphere
                 C = fun.atmosphere_intersection(P, sun_rot)
@@ -217,8 +209,6 @@ def single_scattering_rayleigh(cam_pos, cam_rot):
                 PC = np.linalg.norm(P-C)
                 # variables
                 densityR = 0
-                #densityM = 0
-                #densityO = 0
                 # length of each outscattering step
                 segment_light = PC/samples
                 # adaptive samples
@@ -236,24 +226,12 @@ def single_scattering_rayleigh(cam_pos, cam_rot):
                     height_light = np.linalg.norm(con.earth_center-Q)-con.Re
                     # optical depth
                     densityR += fun.density_rayleigh(height_light)
-                    #densityM += density_mie(height_light)
-                    #densityO += density_ozone(height_light)
                 # optical depth
                 optical_depth_lightR = densityR*segment_light
-                #optical_depth_lightM = densityM*segment_light
-                #optical_depth_lightO = densityO*segment_light
-
-                #transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR) + mie_coeff*(optical_depthM+optical_depth_lightM) + ozone_coeff*(optical_depthO+optical_depth_lightO)
-                #transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR) + mie_coeff*(optical_depthM+optical_depth_lightM)
-                transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR)
-                attenuation = np.exp(-transmittance)
-                sumR += attenuation*pr
-                #sumM += attenuation*pm
-                #sumO += attenuation*po
+                transmittance = np.exp(-rayleigh_coeff*(optical_depthR+optical_depth_lightR))
+                sumR += transmittance*pr
 
         # total intensity at pixel
-        #return sun*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM + sumO*ozone_coeff)
-        #return sun*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM)
         return sun*(sumR*rayleigh_coeff*phaseR)
     else:
         return rayleigh_coeff*0
@@ -347,63 +325,37 @@ def single_scattering_mie(cam_pos, cam_rot):
 
 ############################################################################
 
-N = 14
-rays = np.zeros([N+1,3], dtype=np.float)
-a = 4*pi/N
-d = sqrt(a)
-Mo = round(pi/d)
-do = pi/Mo
-dy = a/do
-flag = 0
-for m in range(Mo):
-    O = pi*(m+0.5)/Mo
-    My = round(2*pi*sin(O)/dy)
-    for n in range(My):
-        y = 2*pi*n/My
-        rays[flag] = np.array([sin(O)*cos(y), sin(O)*sin(y), cos(O)])
-        flag += 1
-
-x = rays[:,0]
-y = rays[:,1]
-z = rays[:,2]
-fig = plt.figure()
-ax = Axes3D(fig)
-ax.scatter(x, y, z)
-plt.show()
-
-
 def gathered_light_rayleigh(point, dir):
-    angle1 = np.dot(dir, ray1)
-    angle2 = np.dot(dir, ray2)
-    angle3 = np.dot(dir, ray3)
-    angle4 = np.dot(dir, ray4)
-    angle5 = np.dot(dir, ray5)
-    angle6 = np.dot(dir, ray6)
-    I1 = fun.phase_rayleigh(angle1)*single_scattering_rayleigh(point, ray1)
-    I2 = fun.phase_rayleigh(angle2)*single_scattering_rayleigh(point, ray2)
-    I3 = fun.phase_rayleigh(angle3)*single_scattering_rayleigh(point, ray3)
-    I4 = fun.phase_rayleigh(angle4)*single_scattering_rayleigh(point, ray4)
-    I5 = fun.phase_rayleigh(angle5)*single_scattering_rayleigh(point, ray5)
-    I6 = fun.phase_rayleigh(angle6)*single_scattering_rayleigh(point, ray6)
-    return (I1+I2+I3+I4+I5+I6)*(radians(60))
+    # code from the pdf i just shared with you
+    N = 16
+    lat = np.zeros([N], dtype=np.float)
+    rays = np.zeros([N,3], dtype=np.float)
+    a = 4*pi/N
+    d = sqrt(a)
+    Mo = round(pi/d)
+    do = pi/Mo
+    dy = a/do
+    flag = 0
+    for m in range(Mo):
+        O = pi*(m+0.5)/Mo
+        My = round(2*pi*sin(O)/dy)
+        for n in range(My):
+            y = 2*pi*n/My
+            lat[flag] = O
+            rays[flag] = np.array([sin(O)*cos(y), sin(O)*sin(y), cos(O)])
+            flag += 1
 
+    # integral
+    I = 0
+    for i in range(N):
+        phase = fun.phase_rayleigh(np.dot(dir, rays[i]))
+        Is = single_scattering_rayleigh(point, rays[i])
+        I += Is*phase
 
-def gathered_light_mie(point, dir):
-    angle1 = np.dot(dir, ray1)
-    angle2 = np.dot(dir, ray2)
-    angle3 = np.dot(dir, ray3)
-    angle4 = np.dot(dir, ray4)
-    angle5 = np.dot(dir, ray5)
-    angle6 = np.dot(dir, ray6)
-    I1 = fun.phase_mie(angle1)*single_scattering_mie(point, ray1)
-    I2 = fun.phase_mie(angle2)*single_scattering_mie(point, ray2)
-    I3 = fun.phase_mie(angle3)*single_scattering_mie(point, ray3)
-    I4 = fun.phase_mie(angle4)*single_scattering_mie(point, ray4)
-    I5 = fun.phase_mie(angle5)*single_scattering_mie(point, ray5)
-    I6 = fun.phase_mie(angle6)*single_scattering_mie(point, ray6)
-    return (I1+I2+I3+I4+I5+I6)*(radians(60))
+    total = I*(4*pi/N)
+    return total
 
-
+'''
 def multiple_scattering(cam_pos, cam_rot):
     # intersection between camera and top of atmosphere
     B = fun.atmosphere_intersection(cam_pos, cam_rot)
@@ -417,11 +369,6 @@ def multiple_scattering(cam_pos, cam_rot):
     Gr = 0
     pr = 0
     opticalR = 0
-    sumM = 0
-    Tm = 0
-    Gm = 0
-    pm = 0
-    opticalM = 0
     # for each point along AB
     for i in range(samples):
         # distance between each sample point and A
@@ -432,17 +379,37 @@ def multiple_scattering(cam_pos, cam_rot):
         height = np.linalg.norm(con.earth_center-P)-con.Re
         # optical depth
         Gr = gathered_light_rayleigh(P, cam_rot)
-        Gm = gathered_light_mie(P, cam_rot)
         pr = fun.density_rayleigh(height)
-        pm = fun.density_mie(height)
         opticalR += pr*segment
-        opticalM += pm*segment
-        T = np.exp(-(rayleigh_coeff*opticalR + mie_coeff*opticalM))
-        sumR += Gr*pr*T
-        sumM += Gm*pm*T
+        Tr = np.exp(-rayleigh_coeff*opticalR)
+        sumR += Gr*pr*Tr
     sumR *= segment
-    sumM *= segment
-    totalR = (rayleigh_coeff/(2*pi))*sumR
-    totalM = (mie_coeff/(2*pi))*sumM
-    total = totalR+totalM
-    return total
+    totalR = (rayleigh_coeff/(4*pi))*sumR
+    return totalR
+'''
+
+def multiple_scattering(cam_pos, cam_rot):
+    # intersection between camera and top of atmosphere
+    B = fun.atmosphere_intersection(cam_pos, cam_rot)
+    # distance from camera to top of atmosphere
+    AB = np.linalg.norm(cam_pos-B)
+    # length of each inscattering step
+    stepSize = AB/samples
+    pr = 0
+    totalInscatteringRayleigh = 0
+    previousInscatteringRayleigh = 0
+    for i in range(samples):
+        # distance between each sample point and A
+        step = i*stepSize+stepSize/2
+        # point for inscattering
+        P = cam_pos+step*cam_rot
+        # height of P from sea level
+        height = np.linalg.norm(con.earth_center-P)-con.Re
+        # optical depth
+        pr += fun.density_rayleigh(height)
+        transmittance = np.exp(-rayleigh_coeff*pr)
+        currentInscatteringRayleigh = gathered_light_rayleigh(P, cam_rot)*fun.density_rayleigh(height)*transmittance
+        totalInscatteringRayleigh += (currentInscatteringRayleigh+previousInscatteringRayleigh)/2*stepSize
+        previousInscatteringRayleigh = currentInscatteringRayleigh
+    totalInscatteringRayleigh *= rayleigh_coeff/(4*pi)
+    return totalInscatteringRayleigh
