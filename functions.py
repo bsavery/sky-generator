@@ -59,6 +59,7 @@ def spec_to_srgb(spec, linear, exposure):
     # XYZ to sRGB linear
     sRGBlinear = (con.D65 @ XYZ)
     if linear:
+        sRGBlinear *= 4
         return sRGBlinear
     else:
         # sRGB linear to non-linear sRGB gamma corrected
