@@ -13,7 +13,6 @@ Hr = 8000               # Rayleigh scale height (m)
 Hm = 1200               # Mie scale height (m)
 g = 0.76                # aerosols anisotropy
 N = 2.504*10**25        # number density of air (molecules/m^3)
-pn = 0.035              # depolarization factor
 distance = 149.6*10**9  # average distance Earth-Sun (m)
 Rs = 695500*10**3       # radius of Sun (m)
 Re = 6360*10**3         # radius of Earth (m)
@@ -31,13 +30,12 @@ E = np.array([[2.3706743, -0.9000405, -0.4706338],
 
 # wavelengths every 5nm
 lam = np.arange(380., 781., 5)*10**-9
-lamnm = np.arange(380, 781, 5)
-# The CIE colour matching function for 380 - 780 nm in 5 nm intervals
+# CIE colour matching function from 380 to 780nm in 5nm intervals
 cmf = np.loadtxt('cie-cmf.txt', usecols=(1,2,3))
 # blackbody radiation
 sun = (2*pi*h*c**2)/(lam**5*(np.exp((h*c)/(k*T*lam))-1))*10**-9
 # irradiance on top of atmosphere
-I = sun*(Rs**2/distance**2)
+irradiance = sun*(Rs**2/distance**2)
 # Rayleigh scattering coefficient (m^-1)
 rayleigh_coeff = ((8*pi**3)*(n**2-1)**2)/(3*N*lam**4)
 # Mie scattering coefficient (m^-1)

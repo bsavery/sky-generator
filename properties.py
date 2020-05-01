@@ -1,7 +1,4 @@
 # Libraries
-import constants as con
-from math import radians
-import functions as fun
 import numpy as np
 
 
@@ -25,12 +22,5 @@ half = True
 linear = False
 # save PNG image
 save_img = False
-exposure = 2
+exposure = 300
 img_name = "sky"
-
-
-# Definitions
-# position of camera
-cam_pos = np.array([0, 0, con.Re+height], dtype=np.int64)
-# normalize sun rotation
-sun_rot = fun.normalize(radians(sun_lat), 0)

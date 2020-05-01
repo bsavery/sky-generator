@@ -1,5 +1,5 @@
 # Libraries
-from math import ceil, cos, exp, pi, radians, sin, sqrt, pow, radians
+from math import cos, exp, pi, sin, sqrt, pow
 import numpy as np
 import constants as con
 
@@ -27,41 +27,44 @@ def phase_rayleigh(mu):
 def phase_mie(mu):
     return (3*(1-con.g**2)*(1+mu**2))/(8*pi*(2+con.g**2)*(1+con.g**2-2*con.g*mu)**1.5)
 
-def atmosphere_intersection(pos, rot):
-    a = pow(rot[0], 2)+pow(rot[1], 2)+pow(rot[2], 2)
-    b = -2*(rot[0]*(-pos[0])+rot[1]*(-pos[1])+rot[2]*(-pos[2]))
-    c = pow(-pos[0], 2)+pow(-pos[1], 2)+pow(-pos[2], 2)-con.Ra**2
-    t = (-b+sqrt(pow(b, 2)-4*a*c))/(2*a)
-    return np.array([pos[0]+rot[0]*t, pos[1]+rot[1]*t, pos[2]+rot[2]*t])
+def distance(P1, P2):
+    return sqrt((P2[0]-P1[0])**2+(P2[1]-P1[1])**2+(P2[2]-P1[2])**2)
 
 def normalize(lat, lon):
     return np.array([cos(lat)*cos(lon), cos(lat)*sin(lon), sin(lat)])
 
-def surface_intersection(pos, rot):
-    if rot[2]>=0:
+def angle_vectors(rot1, rot2):
+    return rot1[0]*rot2[0]+rot1[1]*rot2[1]+rot1[2]*rot2[2]
+
+def atmosphere_intersection(pos, dir):
+    a = pow(dir[0], 2)+pow(dir[1], 2)+pow(dir[2], 2)
+    b = -2*(dir[0]*(-pos[0])+dir[1]*(-pos[1])+dir[2]*(-pos[2]))
+    c = pow(-pos[0], 2)+pow(-pos[1], 2)+pow(-pos[2], 2)-con.Ra**2
+    t = (-b+sqrt(pow(b, 2)-4*a*c))/(2*a)
+    return np.array([pos[0]+dir[0]*t, pos[1]+dir[1]*t, pos[2]+dir[2]*t])
+
+def surface_intersection(pos, dir):
+    if dir[2]>=0:
         return False
-    x = -pos[0]
-    y = -pos[1]
-    z = -pos[2]
-    i = rot[0]
-    j = rot[1]
-    k = rot[2]
-    t = (x*i+y*j+z*k)/(pow(i, 2)+pow(j, 2)+pow(k, 2))
-    D = pow(x, 2)-2*x*i*t+pow(i*t,2)+pow(y, 2)-2*y*j*t+pow(j*t, 2)+pow(z, 2)-2*z*k*t+pow(k*t, 2)
+    t = (-pos[0]*dir[0]-pos[1]*dir[1]-pos[2]*dir[2])/(pow(dir[0], 2)+pow(dir[1], 2)+pow(dir[2], 2))
+    D = pow(-pos[0], 2)-2*-pos[0]*dir[0]*t+pow(dir[0]*t,2)+pow(-pos[1], 2)-2*(-pos[1])*dir[1]*t+pow(dir[1]*t, 2)+pow(-pos[2], 2)-2*(-pos[2])*dir[2]*t+pow(dir[2]*t, 2)
     if D<=con.Re**2:
         return True
     else:
         return False
 
-def spec_to_srgb(spec, linear, exposure):
-    # spectrum to XYZ
-    XYZ = (np.sum(spec[:, np.newaxis]*con.cmf, axis=0)*5*10**-9)*683
+def spec_to_xyz(spec):
+    # integrate color matching function
+    return (np.sum(spec[:, np.newaxis]*con.cmf, axis=0)*5*10**-9)*683
+
+def xyz_to_rgb(xyz, linear, exposure):
     # XYZ to sRGB linear
-    sRGBlinear = (con.D65 @ XYZ)
+    sRGBlinear = (con.D65 @ xyz)
     if linear:
-        sRGBlinear *= 4
         return sRGBlinear
     else:
+        # adjust exposure
+        sRGBlinear = 1-np.exp(-exposure*sRGBlinear)
         # sRGB linear to non-linear sRGB gamma corrected
         sRGBlinear *= exposure
         sRGB = [0, 0, 0]
