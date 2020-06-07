@@ -84,15 +84,11 @@ def single_scattering(cam_dir):
             optical_depth_lightR = densityR*segment_light
             optical_depth_lightM = densityM*segment_light
             optical_depth_lightO = densityO*segment_light
-            transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR) + mie_coeff*(optical_depthM+optical_depth_lightM) + ozone_coeff*(optical_depthO+optical_depth_lightO)
+            transmittance = rayleigh_coeff*(optical_depthR+optical_depth_lightR) + 1.11*mie_coeff*(optical_depthM+optical_depth_lightM) + ozone_coeff*(optical_depthO+optical_depth_lightO)
             attenuation = np.exp(-transmittance)
             sumR += attenuation*pr
             sumM += attenuation*pm
             sumO += attenuation*po
-        else:
-            sumR += 0
-            sumM += 0
-            sumO += 0
 
     # spectrum at pixel
-    return irradiance*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM - sumO*ozone_coeff)
+    return irradiance*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM)

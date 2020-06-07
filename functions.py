@@ -6,10 +6,10 @@ import constants as con
 
 # Functions
 def density_rayleigh(height):
-    return exp(-height/con.Hr)
+    return exp(-height/con.Hr)*con.density_Rayleigh
 
 def density_mie(height):
-    return exp(-height/con.Hm)
+    return exp(-height/con.Hm)*con.density_Mie
 
 def density_ozone(height):
     height /= 1000
@@ -19,7 +19,7 @@ def density_ozone(height):
         p = 0.295*height-3.18
     elif height>=37.33:
         p = 106*exp(-0.0729*height)
-    return (p/5)*10**-9
+    return p*5*10**-8*con.density_Ozone
 
 def phase_rayleigh(mu):
     return 3/(16*pi)*(1+mu**2)
@@ -55,7 +55,7 @@ def surface_intersection(pos, dir):
 
 def spec_to_xyz(spec):
     # integrate color matching function
-    return (np.sum(spec[:, np.newaxis]*con.cmf, axis=0)*5*10**-9)*683
+    return (np.sum(spec[:, np.newaxis]*con.cmf, axis=0)*20*10**-9)*683
 
 def xyz_to_rgb(xyz, linear, exposure):
     # XYZ to sRGB linear
