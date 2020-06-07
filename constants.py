@@ -13,6 +13,8 @@ Hr = 8000               # Rayleigh scale height (m)
 Hm = 1200               # Mie scale height (m)
 g = 0.76                # aerosols anisotropy
 N = 2.504*10**25        # number density of air (molecules/m^3)
+Do = 2.687*10**20       # Dobson unit (molecules/m^2)
+Ozone_max = 300 * Do / 15000    # Maximum number density of ozone molecules (m^-3)
 distance = 149.6*10**9  # average distance Earth-Sun (m)
 Rs = 695500*10**3       # radius of Sun (m)
 Re = 6360*10**3         # radius of Earth (m)
@@ -89,4 +91,6 @@ ozone_cross = np.array([
 2.76872520775773E-22,
 3.13148927506362E-22,
 ])
-ozone_coeff = ozone_cross*10**-4*N
+ozone_coeff = ozone_cross * 10**-4 * Ozone_max
+for i in range(21):
+    print ("%.20f"%ozone_coeff[i], end="f, \n")

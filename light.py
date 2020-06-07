@@ -30,7 +30,6 @@ def single_scattering(cam_dir):
     # Rayleigh and Mie contribution
     sumR = 0
     sumM = 0
-    sumO = 0
     optical_depthR = 0
     optical_depthM = 0
     optical_depthO = 0
@@ -88,7 +87,6 @@ def single_scattering(cam_dir):
             attenuation = np.exp(-transmittance)
             sumR += attenuation*pr
             sumM += attenuation*pm
-            sumO += attenuation*po
 
     # spectrum at pixel
     return irradiance*(sumR*rayleigh_coeff*phaseR + sumM*mie_coeff*phaseM)

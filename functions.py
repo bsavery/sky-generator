@@ -12,14 +12,13 @@ def density_mie(height):
     return exp(-height/con.Hm)*con.density_Mie
 
 def density_ozone(height):
-    height /= 1000
-    if height<9.52:
-        p = 0.1
-    elif height>=9.52 and height<37.33:
-        p = 0.295*height-3.18
-    elif height>=37.33:
-        p = 106*exp(-0.0729*height)
-    return p*5*10**-8*con.density_Ozone
+    if height < 10000 or height >= 40000:
+        den = 0
+    elif height >= 10000 and height < 25000:
+        den = 1/15000 * height - 2/3
+    elif height >= 25000 and height < 40000:
+        den = -(1/15000 * height - 8/3)
+    return den*con.density_Ozone
 
 def phase_rayleigh(mu):
     return 3/(16*pi)*(1+mu**2)
