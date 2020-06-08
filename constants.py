@@ -92,5 +92,3 @@ ozone_cross = np.array([
 3.13148927506362E-22,
 ])
 ozone_coeff = ozone_cross * 10**-4 * Ozone_max
-for i in range(21):
-    print ("%.20f"%ozone_coeff[i], end="f, \n")

@@ -62,13 +62,8 @@ def single_scattering(cam_dir):
             densityO = 0
             # length of each outscattering step
             segment_light = PC/samples
-            # adaptive samples
-            if segment_light>segment:
-                adaptive_samples = samples_light
-            else:
-                adaptive_samples = ceil((segment_light/segment)*samples_light)
             # for each point along PA
-            for j in range(adaptive_samples):
+            for j in range(samples_light):
                 # distance between each sample point and P
                 step_light = j*segment_light+segment_light/2
                 # point for outscattering
