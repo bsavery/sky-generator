@@ -6,7 +6,7 @@ import numpy as np
 # camera altitude from sea level (in m, max: 60km)
 height = 10
 # sun rotation (latitude and longitude in degrees)
-sun_lat = 2
+sun_lat = 60
 sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
 samples = 32

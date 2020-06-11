@@ -61,7 +61,7 @@ def single_scattering(cam_dir):
             densityM = 0
             densityO = 0
             # length of each outscattering step
-            segment_light = PC/samples
+            segment_light = PC/samples_light
             # for each point along PA
             for j in range(samples_light):
                 # distance between each sample point and P
