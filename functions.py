@@ -56,20 +56,17 @@ def spec_to_xyz(spec):
     # integrate color matching function
     return (np.sum(spec[:, np.newaxis]*con.cmf, axis=0)*20*10**-9)*683
 
-def xyz_to_rgb(xyz, linear, exposure):
+def xyz_to_rgb(xyz, exposure):
     # XYZ to sRGB linear
     sRGBlinear = (con.D65 @ xyz)
-    if linear:
-        return sRGBlinear
-    else:
-        # adjust exposure
-        sRGBlinear = 1-np.exp(-exposure*sRGBlinear)
-        # sRGB linear to non-linear sRGB gamma corrected
-        sRGBlinear *= exposure
-        sRGB = [0, 0, 0]
-        for i in range(3):
-            if sRGBlinear[i]>0.0031308:
-                sRGB[i] = 1.055*sRGBlinear[i]**(1/2.4)-0.055
-            else:
-                sRGB[i] = 12.92*sRGBlinear[i]
-        return sRGB
+    # adjust exposure
+    sRGBlinear = 1-np.exp(-exposure*sRGBlinear)
+    # sRGB linear to non-linear sRGB gamma corrected
+    sRGBlinear *= exposure
+    sRGB = [0, 0, 0]
+    for i in range(3):
+        if sRGBlinear[i]>0.0031308:
+            sRGB[i] = 1.055*sRGBlinear[i]**(1/2.4)-0.055
+        else:
+            sRGB[i] = 12.92*sRGBlinear[i]
+    return sRGB

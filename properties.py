@@ -1,11 +1,6 @@
-# Libraries
-import numpy as np
-
-
-# Properties
-# camera altitude from sea level (in m, max: 60km)
+# camera altitude from sea level (in meters, max: 60km)
 height = 10
-# sun rotation (latitude and longitude in degrees)
+# sun latitude and longitude (in degrees)
 sun_lat = 60
 sun_lon = 0
 # divisions of the rays (more divisions make more accurate results)
@@ -16,11 +11,9 @@ nprocess = 3
 # image size (in pixels)
 pixelsx = 128
 pixelsy = int(pixelsx/2)
-# render without black bottom
-half = True
-# save EXR image
-linear = False
+# exposure
+exposure = 300
 # save PNG image
 save_img = False
-exposure = 300
+# image name
 img_name = "sky"

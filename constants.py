@@ -4,21 +4,21 @@ from math import pi
 
 
 # Globals
-h = 6.62607004*10**-34  # Planck's constant
-c = 299792458           # speed of light (m/s)
-T = 5778                # sun's Temperature (k)
-k = 1.38064852*10**-23  # Boltzmann constant
-n = 1.0002926           # IOR of air
-Hr = 8000               # Rayleigh scale height (m)
-Hm = 1200               # Mie scale height (m)
-g = 0.76                # aerosols anisotropy
-N = 2.504*10**25        # number density of air (molecules/m^3)
-Do = 2.687*10**20       # Dobson unit (molecules/m^2)
+h = 6.62607004*10**-34          # Planck's constant
+c = 299792458                   # speed of light (m/s)
+T = 5778                        # sun's Temperature (k)
+k = 1.38064852*10**-23          # Boltzmann constant
+n = 1.0002926                   # IOR of air
+Hr = 8000                       # Rayleigh scale height (m)
+Hm = 1200                       # Mie scale height (m)
+g = 0.76                        # aerosols anisotropy
+N = 2.504*10**25                # number density of air (molecules/m^3)
+Do = 2.687*10**20               # Dobson unit (molecules/m^2)
 Ozone_max = 300 * Do / 15000    # Maximum number density of ozone molecules (m^-3)
-distance = 149.6*10**9  # average distance Earth-Sun (m)
-Rs = 695500*10**3       # radius of Sun (m)
-Re = 6360*10**3         # radius of Earth (m)
-Ra = 6420*10**3         # radius of atmosphere (m)
+distance = 149.6*10**9          # average distance Earth-Sun (m)
+Rs = 695500*10**3               # radius of Sun (m)
+Re = 6360*10**3                 # radius of Earth (m)
+Ra = 6420*10**3                 # radius of atmosphere (m)
 # density values
 density_Rayleigh = 1
 density_Mie = 1
