@@ -1,4 +1,6 @@
 # Libraries
+import os
+import sys
 from math import cos, exp, pi, sin, sqrt, pow
 import numpy as np
 import constants as con
@@ -66,3 +68,9 @@ def xyz_to_rgb(xyz, exposure):
         else:
             sRGB[i] = 12.92 * sRGBlinear[i]
     return sRGB
+
+def n_threads():
+    if sys.platform == 'win32':
+        return (int)(os.environ['NUMBER_OF_PROCESSORS'])
+    else:
+        return (int)(os.popen('grep -c cores /proc/cpuinfo').read())
