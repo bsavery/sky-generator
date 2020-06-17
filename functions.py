@@ -6,67 +6,63 @@ import constants as con
 
 # Functions
 def density_rayleigh(height):
-    return exp(-height/con.Hr)*con.density_Rayleigh
+    return exp(-height / con.Hr)
 
 def density_mie(height):
-    return exp(-height/con.Hm)*con.density_Mie
+    return exp(-height / con.Hm)
 
 def density_ozone(height):
     if height < 10000 or height >= 40000:
-        den = 0
+        return 0
     elif height >= 10000 and height < 25000:
-        den = 1/15000 * height - 2/3
+        return 1 / 15000 * height - 2 / 3
     elif height >= 25000 and height < 40000:
-        den = -(1/15000 * height - 8/3)
-    return den*con.density_Ozone
+        return -(1 / 15000 * height - 8 / 3)
 
 def phase_rayleigh(mu):
-    return 3/(16*pi)*(1+mu**2)
+    return 3 / (16 * pi) * (1 + mu * mu)
 
 def phase_mie(mu):
-    return (3*(1-con.g**2)*(1+mu**2))/(8*pi*(2+con.g**2)*(1+con.g**2-2*con.g*mu)**1.5)
+    return (3 * (1 - con.g * con.g) * (1 + mu * mu)) / (8 * pi * (2 + con.g * con.g) * pow((1 + con.g * con.g - 2 * con.g * mu), 1.5))
 
-def distance(P1, P2):
-    return sqrt((P2[0]-P1[0])**2+(P2[1]-P1[1])**2+(P2[2]-P1[2])**2)
+def distance(a, b):
+    difference = a - b
+    return sqrt(np.dot(difference, difference))
 
-def normalize(lat, lon):
-    return np.array([cos(lat)*cos(lon), cos(lat)*sin(lon), sin(lat)])
-
-def angle_vectors(rot1, rot2):
-    return rot1[0]*rot2[0]+rot1[1]*rot2[1]+rot1[2]*rot2[2]
+def geographical_to_direction(lat, lon):
+    return np.array([cos(lat) * cos(lon), cos(lat) * sin(lon), sin(lat)])
 
 def atmosphere_intersection(pos, dir):
-    a = pow(dir[0], 2)+pow(dir[1], 2)+pow(dir[2], 2)
-    b = -2*(dir[0]*(-pos[0])+dir[1]*(-pos[1])+dir[2]*(-pos[2]))
-    c = pow(-pos[0], 2)+pow(-pos[1], 2)+pow(-pos[2], 2)-con.Ra**2
-    t = (-b+sqrt(pow(b, 2)-4*a*c))/(2*a)
-    return np.array([pos[0]+dir[0]*t, pos[1]+dir[1]*t, pos[2]+dir[2]*t])
+    b = -2 * np.dot(dir, -pos)
+    c = np.sum(pos * pos) - con.Ra * con.Ra
+    t = (-b + sqrt(b * b - 4 * c)) / 2
+    return pos + dir * t
 
 def surface_intersection(pos, dir):
-    if dir[2]>=0:
+    if dir[2] >= 0:
         return False
-    t = (-pos[0]*dir[0]-pos[1]*dir[1]-pos[2]*dir[2])/(pow(dir[0], 2)+pow(dir[1], 2)+pow(dir[2], 2))
-    D = pow(-pos[0], 2)-2*-pos[0]*dir[0]*t+pow(dir[0]*t,2)+pow(-pos[1], 2)-2*(-pos[1])*dir[1]*t+pow(dir[1]*t, 2)+pow(-pos[2], 2)-2*(-pos[2])*dir[2]*t+pow(dir[2]*t, 2)
-    if D<=con.Re**2:
+    t = np.dot(dir, -pos) / np.sum(dir * dir)
+    D = pos[0] * pos[0] - 2 * -pos[0] * dir[0] * t + pow(dir[0] * t, 2) + pos[1] * pos[1] - 2 * (-pos[1]) * dir[1] * t + pow(dir[1] * t, 2) + pos[2] * pos[2] - 2 * (-pos[2]) * dir[2] * t + pow(dir[2] * t, 2)
+    if D <= con.Re*con.Re:
         return True
     else:
         return False
 
 def spec_to_xyz(spec):
     # integrate color matching function
-    return (np.sum(spec[:, np.newaxis]*con.cmf, axis=0)*20*10**-9)*683
+    return (np.sum(spec[:, np.newaxis] * con.cmf, axis=0) * 20 * 10**-9) * 683
 
 def xyz_to_rgb(xyz, exposure):
     # XYZ to sRGB linear
-    sRGBlinear = (con.D65 @ xyz)
+    sRGBlinear = (con.Illuminant_D65 @ xyz)
     # adjust exposure
-    sRGBlinear = 1-np.exp(-exposure*sRGBlinear)
+    sRGBlinear = 1 - np.exp(-exposure * sRGBlinear)
     # sRGB linear to non-linear sRGB gamma corrected
     sRGBlinear *= exposure
     sRGB = [0, 0, 0]
     for i in range(3):
-        if sRGBlinear[i]>0.0031308:
-            sRGB[i] = 1.055*sRGBlinear[i]**(1/2.4)-0.055
+        if sRGBlinear[i] > 0.0031308:
+            sRGB[i] = 1.055 * sRGBlinear[i]**(1 / 2.4) - 0.055
         else:
-            sRGB[i] = 12.92*sRGBlinear[i]
+            sRGB[i] = 12.92 * sRGBlinear[i]
     return sRGB

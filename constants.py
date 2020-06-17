@@ -4,38 +4,33 @@ from math import pi
 
 
 # Globals
-h = 6.62607004*10**-34          # Planck's constant
-c = 299792458                   # speed of light (m/s)
-T = 5778                        # sun's Temperature (k)
-k = 1.38064852*10**-23          # Boltzmann constant
-n = 1.0002926                   # IOR of air
-Hr = 8000                       # Rayleigh scale height (m)
-Hm = 1200                       # Mie scale height (m)
-g = 0.76                        # aerosols anisotropy
-N = 2.504*10**25                # number density of air (molecules/m^3)
-Do = 2.687*10**20               # Dobson unit (molecules/m^2)
-Ozone_max = 300 * Do / 15000    # Maximum number density of ozone molecules (m^-3)
-distance = 149.6*10**9          # average distance Earth-Sun (m)
-Rs = 695500*10**3               # radius of Sun (m)
-Re = 6360*10**3                 # radius of Earth (m)
-Ra = 6420*10**3                 # radius of atmosphere (m)
-# density values
-density_Rayleigh = 1
-density_Mie = 1
-density_Ozone = 1
-# center of Earth
-earth_center = np.array([0, 0, 0])
+h = 6.62607004e-34          # Planck's constant
+c = 299792458               # speed of light (m/s)
+T = 5778                    # sun's Temperature (k)
+k = 1.38064852e-23          # Boltzmann constant
+n = 1.0002926               # IOR of air
+Hr = 8000                   # Rayleigh scale height (m)
+Hm = 1200                   # Mie scale height (m)
+g = 0.76                    # aerosols anisotropy
+N = 2.504e25                # number density of air (molecules/m^3)
+Do = 2.687e20               # Dobson unit (molecules/m^2)
+Ozone_max = 300 * Do / 15e3 # Maximum number density of ozone molecules (m^-3)
+distance = 149.6e9          # average distance Earth-Sun (m)
+Rs = 695500e3               # radius of Sun (m)
+Re = 6360e3                 # radius of Earth (m)
+Ra = 6420e3                 # radius of atmosphere (m)
+num_wavelengths = 21        # number of wavelengths
 
 # Illuminants
-D65 = np.array([[3.2404542, -1.5371385, -0.4985314],
-                [-0.9692660, 1.8760108, 0.0415560],
-                [0.0556434, -0.2040259, 1.0572252]])
-E = np.array([[2.3706743, -0.9000405, -0.4706338],
-                [-0.5138850, 1.4253036, 0.0885814],
-                [0.0052982, -0.0146949, 1.0093968]])
+Illuminant_D65 = np.array([[3.2404542, -1.5371385, -0.4985314],
+                           [-0.9692660, 1.8760108, 0.0415560],
+                           [0.0556434, -0.2040259, 1.0572252]])
+Illuminant_E = np.array([[2.3706743, -0.9000405, -0.4706338],
+                         [-0.5138850, 1.4253036, 0.0885814],
+                         [0.0052982, -0.0146949, 1.0093968]])
 
 # wavelengths every 20nm
-lam = np.arange(380., 781., 20)*10**-9
+lam = np.arange(380., 781., 20) * 10**-9
 # CIE colour matching function from 380 to 780nm in 20nm intervals
 cmf = np.array([
 [0.001368000000, 0.000039000000, 0.006450001000],
@@ -60,13 +55,13 @@ cmf = np.array([
 [0.000166150500, 0.000060000000, 0.000000000000],
 [0.000041509940, 0.000014990000, 0.000000000000]])
 # blackbody radiation
-sun = (2*pi*h*c**2)/(lam**5*(np.exp((h*c)/(k*T*lam))-1))*10**-9
+sun = (2 * pi * h * c * c) / (lam**5 * (np.exp((h * c) / (k * T * lam)) - 1)) * 10**-9
 # irradiance on top of atmosphere
-irradiance = sun*(Rs**2/distance**2)
+irradiance = sun * ((Rs * Rs) / (distance * distance))
 # Rayleigh scattering coefficient (m^-1)
-rayleigh_coeff = ((8*pi**3)*(n**2-1)**2)/(3*N*lam**4)
+rayleigh_coeff = ((8 * pi**3) * (n * n - 1)**2) / (3 * N * lam**4)
 # Mie scattering coefficient (m^-1)
-mie_coeff = (2*10**-5)
+mie_coeff = 2e-5
 # Ozone cross section (in cm^2/molecule) to absorption coefficient (m^-1)
 ozone_cross = np.array([
 6.04999720618854E-24,
