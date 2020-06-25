@@ -1,22 +1,30 @@
 # Libraries
+import functions as fun
+import light
+import os
+import sys
 from math import radians
 from multiprocessing import Process, Array
 import numpy as np
 from PIL import Image
-import functions as fun
-import properties as prop
-import light
+from properties import exposure, pixels_x, pixels_y, save_image, sun_lon
 
 
-# Definitions
-pixels_x = prop.pixels_x
-pixels_y = prop.pixels_y
 # image definition
 halfx = int(pixels_x / 2)
 img = Image.new('RGB', (pixels_x, pixels_y), "black")
 pixels_shifted = img.load()
-# number of processes (number of logic processors of the CPU)
-nprocess = fun.n_threads()
+
+
+# get CPU threads number
+def n_threads():
+    if sys.platform == 'win32':
+        return (int)(os.environ['NUMBER_OF_PROCESSORS'])
+    else:
+        return (int)(os.popen('grep -c cores /proc/cpuinfo').read())
+
+# number of threads
+nprocess = n_threads()
 
 
 # calculate chunk of image
@@ -33,7 +41,7 @@ def calc_pixel(xmin, xmax, pix_array):
             # convert spectrum to xyz
             xyz = fun.spec_to_xyz(spectrum)
             # convert xyz to rgb
-            rgb = fun.xyz_to_rgb(xyz, prop.exposure)
+            rgb = fun.xyz_to_rgb(xyz, exposure)
             # print to pixels array in shared memory
             pos = i * 3 * pixels_y + j * 3
             pix_array[pos] = int(rgb[0] * 255)
@@ -47,7 +55,9 @@ def multiprocess():
     pix_array = Array('f', halfx * pixels_y * 3)
     # split the image in nprocess vertical chunks
     for i in range(nprocess):
-        process = Process(target = calc_pixel, args = (int((halfx / nprocess) * i), int((halfx / nprocess) * (i + 1)), pix_array))
+        start_x = int((halfx / nprocess) * i)
+        end_x = int((halfx / nprocess) * (i + 1))
+        process = Process(target = calc_pixel, args = (start_x, end_x, pix_array))
         processes.append(process)
         process.start()
 
@@ -69,7 +79,7 @@ def multiprocess():
             pixels[pixels_x - i - 1][j] = [r, g, b]
 
     # shift pixels with sun lon change
-    shift = prop.sun_lon / 360 * pixels_x
+    shift = sun_lon / 360 * pixels_x
     s = 0
     for x in range(pixels_x):
         for y in range(pixels_y):
@@ -84,8 +94,8 @@ def multiprocess():
     # show image
     img.show()
     # save image
-    if prop.save_image:
-        img.save(prop.image_name + ".png", "PNG")
+    if save_image:
+        img.save("sky.png", "PNG")
 
 
 # multiprocessing

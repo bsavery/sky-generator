@@ -1,23 +1,21 @@
 # Libraries
-import os
-import sys
-from math import cos, exp, pi, sin, sqrt, pow
 import numpy as np
-import constants as con
+from constants import atmosphere_radius, cmf, earth_radius, filmic_look, illuminant_D65, max_luminous_efficacy, mie_G, mie_scale, rayleigh_scale, sqr_G, wavelengths_step
+from math import cos, exp, pi, sin, sqrt, pow
 
 
 # Functions
-def n_threads():
-    if sys.platform == 'win32':
-        return (int)(os.environ['NUMBER_OF_PROCESSORS'])
-    else:
-        return (int)(os.popen('grep -c cores /proc/cpuinfo').read())
+def clamp(value, min, max):
+    if value < min:
+        return min
+    if value > max:
+        return max
 
 def density_rayleigh(height):
-    return exp(-height / con.Hr)
+    return exp(-height / rayleigh_scale)
 
 def density_mie(height):
-    return exp(-height / con.Hm)
+    return exp(-height / mie_scale)
 
 def density_ozone(height):
     if height < 10000 or height >= 40000:
@@ -31,18 +29,14 @@ def phase_rayleigh(mu):
     return 3 / (16 * pi) * (1 + mu * mu)
 
 def phase_mie(mu):
-    return (3 * (1 - con.g * con.g) * (1 + mu * mu)) / (8 * pi * (2 + con.g * con.g) * pow((1 + con.g * con.g - 2 * con.g * mu), 1.5))
-
-def distance(a, b):
-    difference = a - b
-    return sqrt(np.dot(difference, difference))
+    return (3 * (1 - sqr_G) * (1 + mu * mu)) / (8 * pi * (2 + sqr_G) * pow((1 + sqr_G - 2 * mie_G * mu), 1.5))
 
 def geographical_to_direction(lat, lon):
     return np.array([cos(lat) * cos(lon), cos(lat) * sin(lon), sin(lat)])
 
 def atmosphere_intersection(pos, dir):
     b = -2 * np.dot(dir, -pos)
-    c = np.sum(pos * pos) - con.Ra * con.Ra
+    c = np.sum(pos * pos) - atmosphere_radius * atmosphere_radius
     t = (-b + sqrt(b * b - 4 * c)) / 2
     return pos + dir * t
 
@@ -51,18 +45,18 @@ def surface_intersection(pos, dir):
         return False
     t = np.dot(dir, -pos) / np.sum(dir * dir)
     D = pos[0] * pos[0] - 2 * -pos[0] * dir[0] * t + pow(dir[0] * t, 2) + pos[1] * pos[1] - 2 * (-pos[1]) * dir[1] * t + pow(dir[1] * t, 2) + pos[2] * pos[2] - 2 * (-pos[2]) * dir[2] * t + pow(dir[2] * t, 2)
-    if D <= con.Re*con.Re:
+    if D <= (earth_radius * earth_radius):
         return True
     else:
         return False
 
 def spec_to_xyz(spectrum):
     # xyz tristimulus values
-    return (np.sum(spectrum[:, np.newaxis] * con.cmf, axis=0)) * con.wavelengths_step * con.max_luminous_efficacy
+    return (np.sum(spectrum[:, np.newaxis] * cmf, axis=0)) * wavelengths_step * max_luminous_efficacy
 
 def xyz_to_rgb(xyz, exposure):
     # XYZ to sRGB linear
-    sRGBlinear = np.dot(con.Illuminant_D65, xyz) * 120000
+    sRGBlinear = np.dot(illuminant_D65, xyz) * 120000
     # apply exposure
     sRGB_exposed = sRGBlinear * pow(2, exposure)
     # avoid infinite values
@@ -79,6 +73,6 @@ def xyz_to_rgb(xyz, exposure):
     sRGB = [0.0, 0.0, 0.0]
     for i in range(3):
         index = int(sRGB_log[i] * 4095)
-        sRGB[i] = con.contrast_high[index]
+        sRGB[i] = filmic_look[index]
 
     return sRGB
