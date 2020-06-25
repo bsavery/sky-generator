@@ -7,6 +7,12 @@ import constants as con
 
 
 # Functions
+def n_threads():
+    if sys.platform == 'win32':
+        return (int)(os.environ['NUMBER_OF_PROCESSORS'])
+    else:
+        return (int)(os.popen('grep -c cores /proc/cpuinfo').read())
+
 def density_rayleigh(height):
     return exp(-height / con.Hr)
 
@@ -50,27 +56,29 @@ def surface_intersection(pos, dir):
     else:
         return False
 
-def spec_to_xyz(spec):
-    # integrate color matching function
-    return (np.sum(spec[:, np.newaxis] * con.cmf, axis=0) * 20 * 10**-9) * 683
+def spec_to_xyz(spectrum):
+    # xyz tristimulus values
+    return (np.sum(spectrum[:, np.newaxis] * con.cmf, axis=0)) * con.wavelengths_step * con.max_luminous_efficacy
 
 def xyz_to_rgb(xyz, exposure):
     # XYZ to sRGB linear
-    sRGBlinear = (con.Illuminant_D65 @ xyz)
-    # adjust exposure
-    sRGBlinear = 1 - np.exp(-exposure * sRGBlinear)
-    # sRGB linear to non-linear sRGB gamma corrected
-    sRGBlinear *= exposure
-    sRGB = [0, 0, 0]
+    sRGBlinear = np.dot(con.Illuminant_D65, xyz) * 120000
+    # apply exposure
+    sRGB_exposed = sRGBlinear * pow(2, exposure)
+    # avoid infinite values
     for i in range(3):
-        if sRGBlinear[i] > 0.0031308:
-            sRGB[i] = 1.055 * sRGBlinear[i]**(1 / 2.4) - 0.055
-        else:
-            sRGB[i] = 12.92 * sRGBlinear[i]
-    return sRGB
+        if sRGB_exposed[i] <= 0:
+            sRGB_exposed[i] = 1e-5
+    # apply filmic log encoding
+    sRGB_log = (np.log2(sRGB_exposed / 0.18) + 10) / 16.5
+    # avoid negative values
+    for i in range(3):
+        if sRGB_log[i] <= 0:
+            sRGB_log[i] = 1e-5
+    # apply look contrast
+    sRGB = [0.0, 0.0, 0.0]
+    for i in range(3):
+        index = int(sRGB_log[i] * 4095)
+        sRGB[i] = con.contrast_high[index]
 
-def n_threads():
-    if sys.platform == 'win32':
-        return (int)(os.environ['NUMBER_OF_PROCESSORS'])
-    else:
-        return (int)(os.popen('grep -c cores /proc/cpuinfo').read())
+    return sRGB

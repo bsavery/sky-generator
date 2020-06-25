@@ -14,7 +14,7 @@ steps_light = 16
 pixels_x = 128
 pixels_y = 32
 # exposure
-exposure = 300
+exposure = 0
 # save PNG image
 save_image = False
 # image name

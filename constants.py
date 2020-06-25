@@ -4,22 +4,24 @@ from math import pi
 
 
 # Globals
-h = 6.62607004e-34          # Planck's constant
-c = 299792458               # speed of light (m/s)
-T = 5778                    # sun's Temperature (k)
-k = 1.38064852e-23          # Boltzmann constant
-n = 1.0002926               # IOR of air
-Hr = 8000                   # Rayleigh scale height (m)
-Hm = 1200                   # Mie scale height (m)
-g = 0.76                    # aerosols anisotropy
-N = 2.504e25                # number density of air (molecules/m^3)
-Do = 2.687e20               # Dobson unit (molecules/m^2)
-Ozone_max = 300 * Do / 15e3 # Maximum number density of ozone molecules (m^-3)
-distance = 149.6e9          # average distance Earth-Sun (m)
-Rs = 695500e3               # radius of Sun (m)
-Re = 6360e3                 # radius of Earth (m)
-Ra = 6420e3                 # radius of atmosphere (m)
-num_wavelengths = 21        # number of wavelengths
+h = 6.62607004e-34                                  # Planck's constant
+c = 299792458                                       # speed of light (m/s)
+T = 5778                                            # sun's Temperature (k)
+k = 1.38064852e-23                                  # Boltzmann constant
+n = 1.0002926                                       # IOR of air
+Hr = 8000                                           # Rayleigh scale height (m)
+Hm = 1200                                           # Mie scale height (m)
+g = 0.76                                            # aerosols anisotropy
+N = 2.504e25                                        # number density of air (molecules/m^3)
+Do = 2.687e20                                       # Dobson unit (molecules/m^2)
+Ozone_max = 300 * Do / 15e3                         # Maximum number density of ozone molecules (m^-3)
+distance = 149.6e9                                  # average distance Earth-Sun (m)
+Rs = 695500e3                                       # radius of Sun (m)
+Re = 6360e3                                         # radius of Earth (m)
+Ra = 6420e3                                         # radius of atmosphere (m)
+num_wavelengths = 21                                # number of wavelengths
+wavelengths_step = (num_wavelengths - 1) * 10**-9   # step between wavelengths (m)
+max_luminous_efficacy = 683                         # maximum luminous efficacy
 
 # Illuminants
 Illuminant_D65 = np.array([[3.2404542, -1.5371385, -0.4985314],
@@ -87,3 +89,12 @@ ozone_cross = np.array([
 3.13148927506362E-22,
 ])
 ozone_coeff = ozone_cross * 10**-4 * Ozone_max
+
+def read_filmic_look(path):
+	nums = []
+	with open(path) as filmic_file:
+		for line in filmic_file:
+			nums.append(float(line))
+	return nums
+
+contrast_high = read_filmic_look("looks/high_contrast.txt")
