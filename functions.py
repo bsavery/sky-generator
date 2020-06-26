@@ -22,7 +22,7 @@ def density_ozone(height):
         return 0
     elif height >= 10000 and height < 25000:
         return 1 / 15000 * height - 2 / 3
-    elif height >= 25000 and height < 40000:
+    else: # height >= 25000 and height < 40000:
         return -(1 / 15000 * height - 8 / 3)
 
 def phase_rayleigh(mu):
