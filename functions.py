@@ -22,7 +22,7 @@ def density_ozone(height):
         return 0
     elif height >= 10000 and height < 25000:
         return 1 / 15000 * height - 2 / 3
-    else: # height >= 25000 and height < 40000:
+    else:
         return -(1 / 15000 * height - 8 / 3)
 
 def phase_rayleigh(mu):
@@ -56,6 +56,7 @@ def spec_to_xyz(spectrum):
 
 def xyz_to_rgb(xyz, exposure):
     # XYZ to sRGB linear
+    # the multiply by 120000 is a hack to get a brighter image
     sRGBlinear = np.dot(illuminant_D65, xyz) * 120000
     # apply exposure
     sRGB_exposed = sRGBlinear * pow(2, exposure)
