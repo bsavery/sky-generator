@@ -7,9 +7,11 @@ from properties import air_density, altitude, dust_density, ozone_density, steps
 
 
 # Definitions
-cam_altitude = 1000.0 * fun.clamp(altitude, 0.001, 59.999)
+cam_altitude = 1000 * fun.clamp(altitude, 0.001, 59.999)
 cam_pos = np.array([0, 0, earth_radius + cam_altitude])
 sun_dir = fun.geographical_to_direction(radians(sun_lat), 0)
+coefficients = np.array([rayleigh_coeff, 1.11 * mie_coeff, ozone_coeff])
+density_multipliers = np.array([air_density, dust_density, ozone_density])
 
 
 def ray_optical_depth(ray_origin, ray_dir):
@@ -44,9 +46,7 @@ def single_scattering(ray_dir):
     # accumulate the inscattering as well as the optical depth along each segment
     segment_length = ray_length / steps
     segment = segment_length * ray_dir
-    optical_depth_R = 0
-    optical_depth_M = 0
-    optical_depth_O = 0
+    optical_depth = np.zeros(3)
     spectrum = np.zeros(num_wavelengths)
     # cosine of angle between camera and sun
     mu = np.dot(ray_dir, sun_dir)
@@ -60,27 +60,23 @@ def single_scattering(ray_dir):
         # height above sea level
         height = sqrt(np.dot(P, P)) - earth_radius
         # evaluate and accumulate optical depth along the ray
-        density_R = air_density * fun.density_rayleigh(height)
-        density_M = dust_density * fun.density_mie(height)
-        density_O = ozone_density * fun.density_ozone(height)
-        optical_depth_R += segment_length * density_R
-        optical_depth_M += segment_length * density_M
-        optical_depth_O += segment_length * density_O
+        densities = np.array([fun.density_rayleigh(height), fun.density_mie(height), fun.density_ozone(height)])
+        density = density_multipliers * densities
+        optical_depth += density * segment_length
+
         # if the Earth isn't in the way, evaluate inscattering from the sun
         if not fun.surface_intersection(P, sun_dir):
             optical_depth_light = ray_optical_depth(P, sun_dir)
             # attenuation of light
-            extinction_density_R = (optical_depth_R + air_density * optical_depth_light[0]) * rayleigh_coeff
-            extinction_density_M = (optical_depth_M + dust_density * optical_depth_light[1]) * 1.11 * mie_coeff
-            extinction_density_O = (optical_depth_O + ozone_density * optical_depth_light[2]) * ozone_coeff
-            attenuation = np.exp(-(extinction_density_R + extinction_density_M + extinction_density_O))
-            scattering_density_R = density_R * rayleigh_coeff
-            scattering_density_M = density_M * mie_coeff
+            extinction_density = (optical_depth + density_multipliers * optical_depth_light) * coefficients
+            attenuation = np.exp(-np.sum(extinction_density))
+            scattering_density_R = density[0] * rayleigh_coeff
+            scattering_density_M = density[1] * mie_coeff
             # compute spectrum
-            spectrum += irradiance * attenuation * (phase_function_R * scattering_density_R + phase_function_M * scattering_density_M) * segment_length
+            spectrum += attenuation * (phase_function_R * scattering_density_R + phase_function_M * scattering_density_M)
 
         # advance along ray
         P += segment
 
     # spectrum at pixel
-    return spectrum
+    return spectrum * irradiance * segment_length

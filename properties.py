@@ -1,7 +1,7 @@
 # camera position from sea level (in km, max: 60km)
 altitude = 0.0
 # sun rotation latitude and longitude (in degrees)
-sun_lat = 60
+sun_lat = -3
 sun_lon = 0
 # densities
 air_density = 1
@@ -14,7 +14,7 @@ steps_light = 16
 pixels_x = 128
 pixels_y = 32
 # exposure
-exposure = 0
+exposure = 4
 # look (contrast)
 look = "high_contrast"
 # save PNG image on current folder

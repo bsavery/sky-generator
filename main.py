@@ -41,12 +41,13 @@ def calc_pixel(xmin, xmax, pix_array):
             # convert spectrum to xyz
             xyz = fun.spec_to_xyz(spectrum)
             # convert xyz to rgb
-            rgb = fun.xyz_to_rgb(xyz, exposure)
+            rgb = fun.xyz_to_rgb(xyz, exposure) * 255
+            rgb.astype(int)
             # print to pixels array in shared memory
             pos = i * 3 * pixels_y + j * 3
-            pix_array[pos] = int(rgb[0] * 255)
-            pix_array[pos + 1] = int(rgb[1] * 255)
-            pix_array[pos + 2] = int(rgb[2] * 255)
+            pix_array[pos] = rgb[0]
+            pix_array[pos + 1] = rgb[1]
+            pix_array[pos + 2] = rgb[2]
 
 
 def multiprocess():
@@ -65,20 +66,18 @@ def multiprocess():
     for p in processes:
         p.join()
     
-    pixels = np.zeros([pixels_x, pixels_y, 3], dtype = np.int)
     # print to final pixels
+    pixels = np.zeros([pixels_x, pixels_y, 3], dtype = np.int)
     for i in range(halfx):
         for j in range(pixels_y):
             pos = i * 3 * pixels_y + j * 3
-            r = pix_array[pos]
-            g = pix_array[pos + 1]
-            b = pix_array[pos + 2]
+            rgb = np.array([pix_array[pos], pix_array[pos + 1], pix_array[pos + 2]])
             # store pixels
-            pixels[i][j] = [r, g, b]
+            pixels[i][j] = rgb
             # mirror pixels
-            pixels[pixels_x - i - 1][j] = [r, g, b]
+            pixels[pixels_x - i - 1][j] = rgb
 
-    # shift pixels with sun lon change
+    # shift pixels with sun longitude change
     shift = sun_lon / 360 * pixels_x
     s = 0
     for x in range(pixels_x):
