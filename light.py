@@ -10,7 +10,7 @@ from properties import air_density, altitude, dust_density, ozone_density, steps
 cam_altitude = 1000 * fun.clamp(altitude, 0.001, 59.999)
 cam_pos = np.array([0, 0, earth_radius + cam_altitude])
 sun_dir = fun.geographical_to_direction(radians(sun_lat), 0)
-coefficients = np.array([rayleigh_coeff, 1.11 * mie_coeff, ozone_coeff])
+coefficients = np.array([rayleigh_coeff, 1.11 * mie_coeff, ozone_coeff], dtype=np.object)
 density_multipliers = np.array([air_density, dust_density, ozone_density])
 
 
