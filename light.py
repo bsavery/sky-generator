@@ -1,7 +1,7 @@
 # Libraries
 import functions as fun
 import numpy as np
-from constants import earth_radius, irradiance, mie_coeff, num_wavelengths, ozone_coeff, rayleigh_coeff
+from constants import earth_radius, irradiance, mie_coeff, num_wavelengths, ozone_coeff, rayleigh_coeff, rayleigh_scale, mie_scale
 from math import ceil, cos, exp, pi, radians, sin, sqrt, dist
 from properties import air_density, altitude, dust_density, ozone_density, steps, steps_light, sun_lat
 
@@ -16,19 +16,28 @@ density_multipliers = np.array([air_density, dust_density, ozone_density])
 
 def ray_optical_depth(ray_origin, ray_dir):
     # optical depth along a ray through the atmosphere
+    ray_origin = np.array(ray_origin)
+    ray_dir = np.array(ray_dir)
     ray_end = fun.atmosphere_intersection(ray_origin, ray_dir)
-    ray_length = dist(ray_origin, ray_end)
+    ray = ray_origin - ray_end
+    ray_length = np.sqrt(ray.dot(ray))
     # step along the ray in segments and accumulate the optical depth along each segment
     segment_length = ray_length / steps_light
-    segment = segment_length * ray_dir
-    optical_depth = np.zeros(3)
+    segment = ray_dir * segment_length
     # the density of each segment is evaluated at its middle
     P = ray_origin + 0.5 * segment
-    # height above sea level
-    height = sqrt(np.dot(P, P)) - earth_radius
-
-    optical_depths = np.array([[fun.density_rayleigh(height + n * segment_length), fun.density_mie(height + n * segment_length), fun.density_ozone(height + n * segment_length)] for n in range(steps_light)])
-    return optical_depths.sum(axis=0) * segment_length
+    
+    # list of all P values in steps
+    Ps = np.outer(np.arange(steps_light), segment) + P
+    # height is lengh of Ps - earth_radius
+    heights = np.linalg.norm(Ps, axis=1) - earth_radius
+    # calculate depths for each height
+    optical_depths = np.column_stack((np.exp(-heights / rayleigh_scale), # fun.density_rayleigh for each height
+                                      np.exp(-heights / mie_scale), # fun.density_mie for each height
+                                      np.where(np.logical_or(heights < 10000, heights >= 40000), 0, # fun.density_ozone for each height
+                                                np.where(heights < 25000, heights * 1 / 15000 - 2/3, -(heights * 1 / 15000 - 8/3)))))
+    
+    return np.sum(optical_depths) * segment_length
 
 
 def single_scattering(ray_dir):
