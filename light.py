@@ -24,17 +24,11 @@ def ray_optical_depth(ray_origin, ray_dir):
     optical_depth = np.zeros(3)
     # the density of each segment is evaluated at its middle
     P = ray_origin + 0.5 * segment
+    # height above sea level
+    height = sqrt(np.dot(P, P)) - earth_radius
 
-    for _ in range(steps_light):
-        # height above sea level
-        height = sqrt(np.dot(P, P)) - earth_radius
-        # accumulate optical depth of this segment
-        density = np.array([fun.density_rayleigh(height), fun.density_mie(height), fun.density_ozone(height)])
-        optical_depth += density
-        # advance along ray
-        P += segment
-
-    return optical_depth * segment_length
+    optical_depths = np.array([[fun.density_rayleigh(height + n * segment_length), fun.density_mie(height + n * segment_length), fun.density_ozone(height + n * segment_length)] for n in range(steps_light)])
+    return optical_depths.sum(axis=0) * segment_length
 
 
 def single_scattering(ray_dir):
